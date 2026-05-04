@@ -451,14 +451,24 @@
 
       setTimeout(() => {
         typingRow.remove();
-        addMessage(data.reply, "bot");
+
+        const reply = data.reply || "";
+        let displayMsg = reply;
+
+        if (reply.toLowerCase().includes("quota") || reply.toLowerCase().includes("resource_exhausted")) {
+          displayMsg = "⚠️ Server is busy. Please try again in a few minutes.";
+        } else if (reply.toLowerCase().startsWith("error:") || !reply) {
+          displayMsg = "Something went wrong. Try again.";
+        }
+
+        addMessage(displayMsg, "bot");
         sendBtn.disabled = false;
       }, 800);
 
     } catch (err) {
       setTimeout(() => {
         typingRow.remove();
-        addMessage("Sorry, I couldn't reach the server. Please try again.", "bot");
+        addMessage("Something went wrong. Try again.", "bot");
         sendBtn.disabled = false;
       }, 800);
     }

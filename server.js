@@ -151,7 +151,7 @@ User: ${userMessage}
   } catch (error) {
     const errMsg = error.response?.data?.error?.message || error.message || "Unknown error";
     console.error("FULL ERROR:", errMsg);
-    res.json({ reply: `Error: ${errMsg}` });
+    res.json({ reply: `Error: ${errMsg}` }); // frontend reads this to show friendly messages
   }
 });
 
