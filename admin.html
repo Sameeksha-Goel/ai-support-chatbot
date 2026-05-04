@@ -13,6 +13,36 @@
       text-align: center;
     }
 
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    #search {
+      padding: 8px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 300px;
+      outline: none;
+    }
+
+    #search:focus {
+      border-color: #6c5ce7;
+    }
+
+    button {
+      padding: 8px 16px;
+      background: #6c5ce7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
     .chat-box {
       background: white;
       padding: 15px;
@@ -35,48 +65,67 @@
 <body>
 
 <h1>Admin Panel</h1>
-<button onclick="location.reload()">Refresh</button>
-<div id="chats"></div>
+
+<div class="controls">
+  <input id="search" placeholder="Search user ID..." oninput="filterChats()" />
+  <button onclick="location.reload()">Refresh</button>
+</div>
+
+<div id="chatContainer"></div>
 
 <script>
-async function loadChats() {
-  const res = await fetch("https://ai-support-chatbot-ql1c.onrender.com/admin/chats");
-  const data = await res.json();
+  let allChats = [];
 
-  const container = document.getElementById("chats");
-  container.innerHTML = "";
-
-  data.forEach(chat => {
-    const div = document.createElement("div");
-    div.className = "chat-box";
-
-    div.innerHTML = `<h3>User ID: ${chat.userId}</h3><hr>`;
-
-    chat.messages.forEach(msg => {
-      const p = document.createElement("p");
-
-      if (msg.role === "user") {
-        p.innerHTML = `<span class="user">User:</span> ${msg.content}`;
-      } else {
-        p.innerHTML = `<span class="bot">Bot:</span> ${msg.content}`;
-      }
-
-      if (msg.timestamp) {
-        const time = document.createElement("small");
-        time.style.color = "#aaa";
-        time.style.marginLeft = "8px";
-        time.textContent = new Date(msg.timestamp).toLocaleTimeString();
-        p.appendChild(time);
-      }
-
-      div.appendChild(p);
+  fetch("https://ai-support-chatbot-ql1c.onrender.com/admin/chats")
+    .then(res => res.json())
+    .then(data => {
+      allChats = data;
+      displayChats(data);
     });
 
-    container.appendChild(div);
-  });
-}
+  function displayChats(chats) {
+    const container = document.getElementById("chatContainer");
+    container.innerHTML = "";
 
-loadChats();
+    chats.forEach(chat => {
+      const div = document.createElement("div");
+      div.className = "chat-box";
+
+      div.innerHTML = `<h3>User ID: ${chat.userId}</h3><hr>`;
+
+      chat.messages.forEach(msg => {
+        const p = document.createElement("p");
+
+        if (msg.role === "user") {
+          p.innerHTML = `<span class="user">User:</span> ${msg.content}`;
+        } else {
+          p.innerHTML = `<span class="bot">Bot:</span> ${msg.content}`;
+        }
+
+        if (msg.timestamp) {
+          const time = document.createElement("small");
+          time.style.color = "#aaa";
+          time.style.marginLeft = "8px";
+          time.textContent = new Date(msg.timestamp).toLocaleTimeString();
+          p.appendChild(time);
+        }
+
+        div.appendChild(p);
+      });
+
+      container.appendChild(div);
+    });
+  }
+
+  function filterChats() {
+    const value = document.getElementById("search").value.toLowerCase();
+
+    const filtered = allChats.filter(chat =>
+      chat.userId.toLowerCase().includes(value)
+    );
+
+    displayChats(filtered);
+  }
 </script>
 
 </body>
