@@ -116,7 +116,13 @@
       const div = document.createElement("div");
       div.className = "chat-box";
 
-      div.innerHTML = `<h3>User ID: ${chat.userId}</h3><hr>`;
+      const lastMsg = chat.messages[chat.messages.length - 1];
+
+      div.innerHTML = `
+        <h3>User ID: ${chat.userId}</h3>
+        <p><strong>Last message:</strong> ${lastMsg ? lastMsg.content : "No messages"}</p>
+        <hr>
+      `;
 
       chat.messages.forEach(msg => {
         const p = document.createElement("p");
@@ -159,6 +165,10 @@
   }
 
   function deleteChat(id) {
+    const confirmDelete = confirm("Are you sure you want to delete this chat?");
+
+    if (!confirmDelete) return;
+
     fetch(`https://ai-support-chatbot-ql1c.onrender.com/admin/chats/${id}`, {
       method: "DELETE"
     })
