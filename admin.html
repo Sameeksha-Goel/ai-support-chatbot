@@ -13,6 +13,13 @@
       text-align: center;
     }
 
+    #stats {
+      text-align: center;
+      color: #6c5ce7;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
     .controls {
       display: flex;
       justify-content: center;
@@ -52,6 +59,11 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
+    .chat-box:hover {
+      transform: scale(1.01);
+      transition: 0.2s;
+    }
+
     .user {
       color: #6c5ce7;
       font-weight: bold;
@@ -60,11 +72,22 @@
     .bot {
       color: #00b894;
     }
+
+    .delete-btn {
+      margin-top: 10px;
+      background: #ff4d4d;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
 <h1>Admin Panel</h1>
+<h2 id="stats"></h2>
 
 <div class="controls">
   <input id="search" placeholder="Search user ID..." oninput="filterChats()" />
@@ -81,6 +104,8 @@
     .then(data => {
       allChats = data;
       displayChats(data);
+      document.getElementById("stats").innerText =
+        `Total Conversations: ${data.length}`;
     });
 
   function displayChats(chats) {
@@ -113,6 +138,12 @@
         div.appendChild(p);
       });
 
+      div.innerHTML += `
+        <button class="delete-btn" onclick="deleteChat('${chat._id}')">
+          Delete Chat
+        </button>
+      `;
+
       container.appendChild(div);
     });
   }
@@ -125,6 +156,16 @@
     );
 
     displayChats(filtered);
+  }
+
+  function deleteChat(id) {
+    fetch(`https://ai-support-chatbot-ql1c.onrender.com/admin/chats/${id}`, {
+      method: "DELETE"
+    })
+    .then(() => {
+      alert("Chat deleted");
+      location.reload();
+    });
   }
 </script>
 

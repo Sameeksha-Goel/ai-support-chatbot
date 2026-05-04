@@ -154,6 +154,15 @@ User: ${userMessage}
   }
 });
 
+app.delete("/admin/chats/:id", async (req, res) => {
+  try {
+    await Chat.findByIdAndDelete(req.params.id);
+    res.send("Deleted");
+  } catch (err) {
+    res.status(500).send("Error deleting");
+  }
+});
+
 app.get("/admin/chats", async (req, res) => {
   try {
     const chats = await Chat.find().sort({ _id: -1 });
