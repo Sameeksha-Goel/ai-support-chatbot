@@ -158,6 +158,7 @@ app.get("/admin/chats", async (req, res) => {
     const chats = await Chat.find().sort({ _id: -1 });
     res.json(chats);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Failed to fetch chats" });
   }
 });
