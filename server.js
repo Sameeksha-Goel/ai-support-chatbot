@@ -153,6 +153,15 @@ User: ${userMessage}
   }
 });
 
+app.get("/admin/chats", async (req, res) => {
+  try {
+    const chats = await Chat.find().sort({ _id: -1 });
+    res.json(chats);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch chats" });
+  }
+});
+
 // Start server
 app.listen(3000, () => {
   console.log("Server running on port 3000");
