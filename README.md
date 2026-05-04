@@ -6,8 +6,8 @@ A full-stack AI-powered customer support chatbot with an admin dashboard for mon
 
 ## 🚀 Live Demo
 
-- 💬 **Chatbot:** https://your-chatbot-link.netlify.app
-- 🛠️ **Admin Panel:** https://your-admin-link.netlify.app
+- 💬 **Chatbot:** [https://your-chatbot-link.netlify.app](https://thunderous-torte-3fb7c4.netlify.app/)
+- 🛠️ **Admin Panel:** https://beamish-jelly-448134.netlify.app/
 
 ---
 
