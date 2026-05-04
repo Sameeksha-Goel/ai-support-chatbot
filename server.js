@@ -149,8 +149,9 @@ User: ${userMessage}
     res.json({ reply });
 
   } catch (error) {
-    console.error("FULL ERROR:", error.response?.data || error);
-    res.json({ reply: "Error connecting to AI" });
+    const errMsg = error.response?.data?.error?.message || error.message || "Unknown error";
+    console.error("FULL ERROR:", errMsg);
+    res.json({ reply: `Error: ${errMsg}` });
   }
 });
 
