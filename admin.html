@@ -5,27 +5,37 @@
   <style>
     body {
       font-family: Arial;
-      background: #f5f5f5;
+      background: #f5f6fa;
       padding: 20px;
     }
-    .chat {
+
+    h1 {
+      text-align: center;
+    }
+
+    .chat-box {
       background: white;
       padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin: 20px auto;
+      border-radius: 12px;
+      max-width: 700px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
+
     .user {
-      color: blue;
+      color: #6c5ce7;
+      font-weight: bold;
     }
+
     .bot {
-      color: green;
+      color: #00b894;
     }
   </style>
 </head>
 <body>
 
 <h1>Admin Panel</h1>
+<button onclick="location.reload()">Refresh</button>
 <div id="chats"></div>
 
 <script>
@@ -38,14 +48,27 @@ async function loadChats() {
 
   data.forEach(chat => {
     const div = document.createElement("div");
-    div.className = "chat";
+    div.className = "chat-box";
 
-    div.innerHTML = `<h3>User: ${chat.userId}</h3>`;
+    div.innerHTML = `<h3>User ID: ${chat.userId}</h3><hr>`;
 
     chat.messages.forEach(msg => {
       const p = document.createElement("p");
-      p.className = msg.role === "user" ? "user" : "bot";
-      p.innerText = `${msg.role}: ${msg.content}`;
+
+      if (msg.role === "user") {
+        p.innerHTML = `<span class="user">User:</span> ${msg.content}`;
+      } else {
+        p.innerHTML = `<span class="bot">Bot:</span> ${msg.content}`;
+      }
+
+      if (msg.timestamp) {
+        const time = document.createElement("small");
+        time.style.color = "#aaa";
+        time.style.marginLeft = "8px";
+        time.textContent = new Date(msg.timestamp).toLocaleTimeString();
+        p.appendChild(time);
+      }
+
       div.appendChild(p);
     });
 
