@@ -105,6 +105,7 @@ const faq = [
 function detectIntent(message) {
   const msg = message.toLowerCase();
   if (msg.includes("human") || msg.includes("agent") || msg.includes("real person") || msg.includes("speak to someone")) return "human_handoff";
+  if (msg.includes("broken") || msg.includes("damaged") || msg.includes("defective") || msg.includes("wrong item") || msg.includes("not working") || msg.includes("faulty") || msg.includes("cracked") || msg.includes("missing item")) return "damaged_product";
   if (msg.includes("track")) return "track_order";
   if (msg.includes("delivery") || msg.includes("shipping")) return "delivery_info";
   if (msg.includes("cancel") || msg.includes("cancellation")) return "cancel_order";
@@ -199,6 +200,13 @@ app.post("/chat", async (req, res) => {
     return res.json({ reply });
   }
 
+  if (intent === "damaged_product") {
+    const reply = `We're really sorry to hear that! 😔 Here's what to do:\n\n1. Take clear photos of the damaged/incorrect item\n2. Share your order ID with us\n3. Tell us whether you'd prefer a replacement or a full refund\n\nWe'll get this sorted for you within 24–48 hours. 🙏`;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
   if (intent === "cancel_order") {
     const reply = "Orders cannot be cancelled once placed.";
     chat.messages.push({ role: "model", content: reply });
@@ -231,10 +239,12 @@ Rules:
 - Do NOT give long explanations
 - Do NOT ask multiple questions
 - Never say "it depends"
+- Be empathetic when the customer has a problem
 - Use this info:
   - Delivery takes 3–5 days
   - Orders cannot be cancelled
   - Refunds within 7 days
+  - For damaged, defective, or wrong items: ask for photos and order ID, offer replacement or refund within 24–48 hours
 
 Conversation:
 ${chat.messages.map(m => `${m.role}: ${m.content}`).join("\n")}
