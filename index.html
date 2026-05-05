@@ -591,15 +591,6 @@
         const receipt = userRow.querySelector(".receipt");
         if (receipt) receipt.classList.add("delivered");
 
-        // Render order card if present
-        if (data.orderCard) {
-          addBotMessage(displayMsg, () => {
-            renderOrderCard(data.orderCard);
-          });
-          sendBtn.disabled = false;
-          return;
-        }
-
         // Render bot reply with typing simulation
         const botRow = addBotMessage(displayMsg, () => {
           // Quick reply chips after typing finishes

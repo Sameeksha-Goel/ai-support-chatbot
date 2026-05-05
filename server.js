@@ -168,21 +168,7 @@ app.post("/chat", async (req, res) => {
       chat.awaitingOrderId = false;
       chat.messages.push({ role: "model", content: reply });
       await chat.save();
-      return res.json({
-        reply,
-        orderCard: {
-          orderId,
-          item:              order.item,
-          quantity:          order.quantity,
-          price:             order.price,
-          status:            order.status,
-          placedDate:        order.placedDate,
-          shippedDate:       order.shippedDate,
-          estimatedDelivery: order.estimatedDelivery,
-          trackingNumber:    order.trackingNumber,
-          carrier:           order.carrier,
-        }
-      });
+      return res.json({ reply });
     }
     chat.awaitingOrderId = false;
   }
