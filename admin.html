@@ -12,233 +12,160 @@
       background: #0a0a0a;
       color: #e0e0e0;
       min-height: 100vh;
-      padding: 32px 20px;
+      padding: 28px 20px;
     }
 
     /* ── Header ── */
     .admin-header {
-      max-width: 860px;
-      margin: 0 auto 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
+      max-width: 900px; margin: 0 auto 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px;
     }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
+    .header-left { display: flex; align-items: center; gap: 12px; }
     .brand-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: #c9b800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 900;
-      color: #0a0a0a;
+      width: 40px; height: 40px; border-radius: 12px;
+      background: #c9b800; display: flex; align-items: center;
+      justify-content: center; font-size: 20px; font-weight: 900; color: #0a0a0a;
     }
+    h1 { font-size: 22px; font-weight: 800; color: #fff; }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 800;
-      color: #ffffff;
+    .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      max-width: 900px; margin: 0 auto 20px;
+      display: flex; gap: 12px; flex-wrap: wrap;
     }
-
-    #stats {
-      font-size: 13px;
-      color: #c9b800;
+    .stat-pill {
+      font-size: 13px; color: #c9b800;
       background: rgba(201,184,0,0.1);
       border: 1px solid rgba(201,184,0,0.2);
-      padding: 6px 14px;
-      border-radius: 20px;
+      padding: 6px 14px; border-radius: 20px;
     }
+    .stat-pill.handoff { color: #f97316; background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.2); }
+    .stat-pill.live { color: #4ade80; background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.2); display: flex; align-items: center; gap: 6px; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: blink 1.5s infinite; }
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+    /* ── Tabs ── */
+    .tabs {
+      max-width: 900px; margin: 0 auto 20px;
+      display: flex; gap: 4px;
+      background: #1a1a1a; border-radius: 12px; padding: 4px; width: fit-content;
+    }
+    .tab {
+      padding: 8px 18px; border-radius: 9px; border: none;
+      background: none; color: #666; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+    }
+    .tab.active { background: #c9b800; color: #0a0a0a; }
+    .tab:not(.active):hover { color: #c9b800; }
 
     /* ── Controls ── */
     .controls {
-      max-width: 860px;
-      margin: 0 auto 24px;
-      display: flex;
-      gap: 10px;
+      max-width: 900px; margin: 0 auto 20px;
+      display: flex; gap: 10px;
     }
-
     #search {
-      flex: 1;
-      padding: 10px 18px;
-      background: #1a1a1a;
-      border: 1.5px solid #242424;
-      border-radius: 10px;
-      outline: none;
-      font-family: inherit;
-      font-size: 14px;
-      color: #e0e0e0;
+      flex: 1; padding: 10px 18px;
+      background: #1a1a1a; border: 1.5px solid #242424;
+      border-radius: 10px; outline: none;
+      font-family: inherit; font-size: 14px; color: #e0e0e0;
       transition: border-color 0.18s;
     }
-
     #search:focus { border-color: #c9b800; }
     #search::placeholder { color: #444; }
 
-    .refresh-btn {
-      padding: 10px 20px;
-      background: #c9b800;
-      color: #0a0a0a;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 700;
+    .btn {
+      padding: 10px 18px; border: none; border-radius: 10px;
+      cursor: pointer; font-size: 13px; font-weight: 700;
       transition: opacity 0.15s, transform 0.15s;
     }
+    .btn:hover { opacity: 0.88; transform: scale(1.02); }
+    .btn-gold { background: #c9b800; color: #0a0a0a; }
+    .btn-outline { background: none; border: 1px solid #2a2a2a; color: #888; }
+    .btn-outline:hover { border-color: #c9b800; color: #c9b800; }
 
-    .refresh-btn:hover { opacity: 0.88; transform: scale(1.02); }
+    /* ── Tab Panels ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
 
     /* ── Chat Card ── */
     .chat-card {
-      background: #111111;
-      border: 1px solid #1e1e1e;
-      border-radius: 16px;
-      padding: 20px;
-      margin: 0 auto 16px;
-      max-width: 860px;
+      background: #111111; border: 1px solid #1e1e1e;
+      border-radius: 16px; padding: 20px;
+      margin: 0 auto 14px; max-width: 900px;
       transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
     }
-
-    .chat-card:hover {
-      border-color: #2a2a2a;
-      transform: translateY(-3px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    }
+    .chat-card:hover { border-color: #2a2a2a; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+    .chat-card.handoff-card { border-color: rgba(249,115,22,0.3); }
 
     .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      gap: 10px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
     }
-
     .user-id {
-      font-size: 11px;
-      font-weight: 700;
-      color: #c9b800;
-      background: rgba(201,184,0,0.08);
-      border: 1px solid rgba(201,184,0,0.2);
-      padding: 3px 9px;
-      border-radius: 20px;
-      letter-spacing: 0.03em;
-      max-width: 60%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      font-size: 11px; font-weight: 700; color: #c9b800;
+      background: rgba(201,184,0,0.08); border: 1px solid rgba(201,184,0,0.2);
+      padding: 3px 9px; border-radius: 20px; letter-spacing: 0.03em;
+      max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-
-    .card-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
+    .card-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .msg-badge {
-      font-size: 10px;
-      font-weight: 700;
-      color: #888;
-      background: #1e1e1e;
-      border: 1px solid #2a2a2a;
-      padding: 3px 8px;
-      border-radius: 20px;
+      font-size: 10px; font-weight: 700; color: #888;
+      background: #1e1e1e; border: 1px solid #2a2a2a;
+      padding: 3px 8px; border-radius: 20px;
+    }
+    .handoff-badge {
+      font-size: 10px; font-weight: 700; color: #f97316;
+      background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25);
+      padding: 3px 8px; border-radius: 20px;
     }
 
     .last-preview {
-      font-size: 14px;
-      font-weight: 500;
-      color: #bbb;
-      margin-bottom: 14px;
-      padding-bottom: 14px;
+      font-size: 14px; font-weight: 500; color: #bbb;
+      margin-bottom: 14px; padding-bottom: 14px;
       border-bottom: 1px solid #1a1a1a;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
     .last-preview strong { color: #c9b800; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-right: 6px; }
 
-    /* ── Messages ── */
     .messages { display: flex; flex-direction: column; gap: 6px; }
-
-    .msg {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
+    .msg { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.5; }
     .msg-role {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
-      flex-shrink: 0;
-      margin-top: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: 10px; font-weight: 700; padding: 2px 7px;
+      border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+      text-transform: uppercase; letter-spacing: 0.05em;
     }
+    .msg.user-msg .msg-role { background: rgba(201,184,0,0.15); color: #c9b800; }
+    .msg.bot-msg  .msg-role { background: rgba(74,222,128,0.1); color: #4ade80; }
+    .msg-content { color: #ccc; flex: 1; }
+    .msg-time { font-size: 10px; color: #333; flex-shrink: 0; }
 
-    .msg.user-msg .msg-role {
-      background: rgba(201,184,0,0.15);
-      color: #c9b800;
-    }
-
-    .msg.bot-msg .msg-role {
-      background: rgba(74,222,128,0.1);
-      color: #4ade80;
-    }
-
-    .msg-content { color: #ccc; }
-
-    .msg-time {
-      font-size: 10px;
-      color: #333;
-      margin-left: auto;
-      flex-shrink: 0;
-    }
-
-    /* ── Delete Button ── */
     .delete-btn {
-      margin-top: 12px;
-      padding: 7px 14px;
-      background: rgba(255,77,77,0.1);
-      color: #ff4d4d;
-      border: 1px solid rgba(255,77,77,0.2);
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      opacity: 0.7;
-      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+      margin-top: 12px; padding: 7px 14px;
+      background: rgba(255,77,77,0.1); color: #ff4d4d;
+      border: 1px solid rgba(255,77,77,0.2); border-radius: 8px;
+      cursor: pointer; font-size: 12px; font-weight: 600;
+      opacity: 0.7; transition: background 0.15s, border-color 0.15s, opacity 0.15s;
     }
-
     .chat-card:hover .delete-btn { opacity: 1; }
+    .delete-btn:hover { background: rgba(255,77,77,0.2); border-color: rgba(255,77,77,0.4); }
 
-    .delete-btn:hover {
-      background: rgba(255,77,77,0.2);
-      border-color: rgba(255,77,77,0.4);
+    /* ── Unanswered Questions ── */
+    .unanswered-card {
+      background: #111111; border: 1px solid #1e1e1e;
+      border-radius: 12px; padding: 14px 18px;
+      margin: 0 auto 10px; max-width: 900px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
     }
+    .unanswered-q { font-size: 14px; color: #e0e0e0; flex: 1; }
+    .unanswered-meta { font-size: 11px; color: #444; flex-shrink: 0; text-align: right; }
 
-    .empty-state {
-      text-align: center;
-      color: #333;
-      padding: 60px 0;
-      font-size: 15px;
-    }
+    .empty-state { text-align: center; color: #333; padding: 60px 0; font-size: 15px; }
+
+    /* ── Countdown ── */
+    #countdown { font-size: 11px; color: #444; }
   </style>
 </head>
 <body>
@@ -248,27 +175,68 @@
       <div class="brand-icon">A</div>
       <h1>Admin Panel</h1>
     </div>
-    <span id="stats"></span>
+    <div class="header-actions">
+      <span id="countdown"></span>
+      <a href="https://ai-support-chatbot-ql1c.onrender.com/admin/export" class="btn btn-outline" download>⬇ Export CSV</a>
+      <button class="btn btn-gold" onclick="loadAll()">↺ Refresh</button>
+    </div>
   </div>
 
-  <div class="controls">
-    <input id="search" placeholder="Search by user ID..." oninput="filterChats()" />
-    <button class="refresh-btn" onclick="location.reload()">↺ Refresh</button>
+  <div class="stats-bar">
+    <span class="stat-pill" id="stat-total">— Conversations</span>
+    <span class="stat-pill" id="stat-msgs">— Messages</span>
+    <span class="stat-pill handoff" id="stat-handoff">— Human Requests</span>
+    <span class="stat-pill live"><span class="live-dot"></span> Live dashboard</span>
   </div>
 
-  <div id="chatContainer"></div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('chats', this)">💬 Conversations</button>
+    <button class="tab" onclick="switchTab('unanswered', this)">❓ Unanswered</button>
+  </div>
+
+  <!-- Conversations panel -->
+  <div class="panel active" id="panel-chats">
+    <div class="controls">
+      <input id="search" placeholder="Search by user ID..." oninput="filterChats()" />
+    </div>
+    <div id="chatContainer"></div>
+  </div>
+
+  <!-- Unanswered questions panel -->
+  <div class="panel" id="panel-unanswered">
+    <div id="unansweredContainer"></div>
+  </div>
 
 <script>
+  const API = "https://ai-support-chatbot-ql1c.onrender.com";
   let allChats = [];
+  let refreshInterval;
+  let countdown = 30;
 
-  fetch("https://ai-support-chatbot-ql1c.onrender.com/admin/chats")
-    .then(res => res.json())
-    .then(data => {
-      allChats = data;
-      displayChats(data);
-      document.getElementById("stats").textContent =
-        `${data.length} Conversation${data.length !== 1 ? "s" : ""}`;
-    });
+  function switchTab(name, btn) {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("panel-" + name).classList.add("active");
+  }
+
+  async function loadAll() {
+    await Promise.all([loadChats(), loadUnanswered()]);
+    countdown = 30;
+  }
+
+  // ── Conversations ──────────────────────────────────────────────────────────
+  async function loadChats() {
+    const data = await fetch(`${API}/admin/chats`).then(r => r.json());
+    allChats = data;
+    displayChats(data);
+
+    const totalMsgs = data.reduce((sum, c) => sum + c.messages.length, 0);
+    const handoffCount = data.filter(c => c.requestedHuman).length;
+    document.getElementById("stat-total").textContent = `${data.length} Conversation${data.length !== 1 ? "s" : ""}`;
+    document.getElementById("stat-msgs").textContent = `${totalMsgs} Messages`;
+    document.getElementById("stat-handoff").textContent = `${handoffCount} Human Request${handoffCount !== 1 ? "s" : ""}`;
+  }
 
   function displayChats(chats) {
     const container = document.getElementById("chatContainer");
@@ -281,7 +249,7 @@
 
     chats.forEach(chat => {
       const card = document.createElement("div");
-      card.className = "chat-card";
+      card.className = "chat-card" + (chat.requestedHuman ? " handoff-card" : "");
 
       const lastMsg = chat.messages[chat.messages.length - 1];
 
@@ -289,6 +257,7 @@
         <div class="card-header">
           <span class="user-id">${chat.userId}</span>
           <div class="card-meta">
+            ${chat.requestedHuman ? `<span class="handoff-badge">🙋 Needs Agent</span>` : ""}
             <span class="msg-badge">${chat.messages.length} msgs</span>
           </div>
         </div>
@@ -300,21 +269,17 @@
       `;
 
       const msgsDiv = card.querySelector(`#msgs-${chat._id}`);
-
       chat.messages.forEach(msg => {
         const div = document.createElement("div");
         div.className = `msg ${msg.role === "user" ? "user-msg" : "bot-msg"}`;
-
         const timeStr = msg.timestamp
           ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
           : "";
-
         div.innerHTML = `
           <span class="msg-role">${msg.role === "user" ? "User" : "Bot"}</span>
           <span class="msg-content">${msg.content}</span>
           ${timeStr ? `<span class="msg-time">${timeStr}</span>` : ""}
         `;
-
         msgsDiv.appendChild(div);
       });
 
@@ -329,14 +294,50 @@
 
   function deleteChat(id) {
     if (!confirm("Are you sure you want to delete this chat?")) return;
+    fetch(`${API}/admin/chats/${id}`, { method: "DELETE" })
+      .then(() => loadChats());
+  }
 
-    fetch(`https://ai-support-chatbot-ql1c.onrender.com/admin/chats/${id}`, {
-      method: "DELETE"
-    }).then(() => {
-      alert("Chat deleted");
-      location.reload();
+  // ── Unanswered questions ───────────────────────────────────────────────────
+  async function loadUnanswered() {
+    const data = await fetch(`${API}/admin/unanswered`).then(r => r.json());
+    const container = document.getElementById("unansweredContainer");
+    container.innerHTML = "";
+
+    if (!data.length) {
+      container.innerHTML = `<div class="empty-state">No unanswered questions yet</div>`;
+      return;
+    }
+
+    data.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "unanswered-card";
+      const ts = item.timestamp ? new Date(item.timestamp).toLocaleString() : "";
+      card.innerHTML = `
+        <span class="unanswered-q">${item.question}</span>
+        <div class="unanswered-meta">
+          <div>${item.userId?.slice(0, 10)}...</div>
+          <div>${ts}</div>
+        </div>
+      `;
+      container.appendChild(card);
     });
   }
+
+  // ── Live dashboard (auto-refresh every 30s) ────────────────────────────────
+  function startLiveRefresh() {
+    refreshInterval = setInterval(async () => {
+      countdown--;
+      document.getElementById("countdown").textContent = `Refreshing in ${countdown}s`;
+      if (countdown <= 0) {
+        await loadAll();
+      }
+    }, 1000);
+  }
+
+  // Init
+  loadAll();
+  startLiveRefresh();
 </script>
 
 </body>

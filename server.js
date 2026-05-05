@@ -14,9 +14,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ── Schemas ──────────────────────────────────────────────────────────────────
+
 const ChatSchema = new mongoose.Schema({
   userId: String,
   awaitingOrderId: { type: Boolean, default: false },
+  requestedHuman: { type: Boolean, default: false },
   messages: [
     {
       role: String,
@@ -26,25 +29,52 @@ const ChatSchema = new mongoose.Schema({
   ],
 });
 
-const Chat = mongoose.model("Chat", ChatSchema);
+const OrderSchema = new mongoose.Schema({
+  orderId: { type: String, unique: true },
+  status: String,
+  deliveryDate: String,
+  item: String,
+});
 
+const UnansweredSchema = new mongoose.Schema({
+  question: String,
+  userId: String,
+  timestamp: { type: Date, default: Date.now },
+});
+
+const Chat = mongoose.model("Chat", ChatSchema);
+const Order = mongoose.model("Order", OrderSchema);
+const Unanswered = mongoose.model("Unanswered", UnansweredSchema);
+
+// ── Seed orders if none exist ─────────────────────────────────────────────────
+async function seedOrders() {
+  const count = await Order.countDocuments();
+  if (count === 0) {
+    await Order.insertMany([
+      { orderId: "16452", status: "Shipped", deliveryDate: "in 2 days", item: "Wireless Headphones" },
+      { orderId: "29831", status: "Out for delivery", deliveryDate: "today", item: "Running Shoes" },
+      { orderId: "38820", status: "Processing", deliveryDate: "in 5 days", item: "Laptop Stand" },
+      { orderId: "47193", status: "Delivered", deliveryDate: "yesterday", item: "Phone Case" },
+    ]);
+    console.log("Orders seeded.");
+  }
+}
+mongoose.connection.once("open", seedOrders);
+
+// ── Sessions ──────────────────────────────────────────────────────────────────
 const sessions = {};
 
-const orders = {
-  "16452": {
-    deliveryDate: "in 2 days",
-    status: "Shipped",
-  },
-};
-
+// ── FAQ ───────────────────────────────────────────────────────────────────────
 const faq = [
   { keywords: ["refund", "return"], answer: "Refunds are allowed within 7 days of purchase." },
   { keywords: ["delivery", "shipping"], answer: "Delivery takes 3–5 business days." },
   { keywords: ["cancel", "cancellation"], answer: "Orders cannot be cancelled once placed." },
 ];
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function detectIntent(message) {
   const msg = message.toLowerCase();
+  if (msg.includes("human") || msg.includes("agent") || msg.includes("real person") || msg.includes("speak to someone")) return "human_handoff";
   if (msg.includes("track")) return "track_order";
   if (msg.includes("delivery") || msg.includes("shipping")) return "delivery_info";
   if (msg.includes("cancel") || msg.includes("cancellation")) return "cancel_order";
@@ -54,63 +84,55 @@ function detectIntent(message) {
 function findBestMatch(userMessage, faq) {
   let bestMatch = null;
   let maxScore = 0;
-
   for (let item of faq) {
     let score = 0;
-
     for (let keyword of item.keywords) {
-      if (userMessage.includes(keyword)) {
-        score++;
-      }
+      if (userMessage.includes(keyword)) score++;
     }
-
-    if (score > maxScore) {
-      maxScore = score;
-      bestMatch = item;
-    }
+    if (score > maxScore) { maxScore = score; bestMatch = item; }
   }
-
   return maxScore > 0 ? bestMatch : null;
 }
 
-app.get("/", (req, res) => {
-  res.send("Gemini chatbot server running!");
-});
+// ── Routes ────────────────────────────────────────────────────────────────────
+
+app.get("/", (req, res) => res.send("Gemini chatbot server running!"));
 
 app.post("/chat", async (req, res) => {
   const { message, userId } = req.body;
   const userMessage = message.toLowerCase();
 
-  // 1. Create/find chat
   let chat = await Chat.findOne({ userId });
-  if (!chat) {
-    chat = new Chat({ userId, messages: [] });
-  }
+  if (!chat) chat = new Chat({ userId, messages: [] });
 
-  // 2. Add user message
   chat.messages.push({ role: "user", content: userMessage });
 
-  // 3. If awaiting order ID → look it up
+  // Awaiting order ID
   if (chat.awaitingOrderId) {
     const orderId = userMessage.match(/\d+/)?.[0];
-
     if (orderId) {
-      const reply = orders[orderId]
-        ? `Order ${orderId} is ${orders[orderId].status} and will arrive ${orders[orderId].deliveryDate}.`
-        : "Sorry, I couldn't find that order number.";
-
+      const order = await Order.findOne({ orderId });
+      const reply = order
+        ? `Order ${orderId} (${order.item}) is ${order.status} — arriving ${order.deliveryDate}.`
+        : "Sorry, I couldn't find that order number. Please check and try again.";
       chat.awaitingOrderId = false;
       chat.messages.push({ role: "model", content: reply });
       await chat.save();
       return res.json({ reply });
     }
-
-    // No number found — reset flag and fall through to normal processing
     chat.awaitingOrderId = false;
   }
 
-  // 4. Intent detection
+  // Intent detection
   const intent = detectIntent(userMessage);
+
+  if (intent === "human_handoff") {
+    const reply = "I've notified our support team. A human agent will reach out to you shortly. 🙋";
+    chat.requestedHuman = true;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply, humanHandoff: true });
+  }
 
   if (intent === "track_order") {
     const reply = "Please enter your order ID to track your order.";
@@ -134,7 +156,7 @@ app.post("/chat", async (req, res) => {
     return res.json({ reply });
   }
 
-  // 5. FAQ keyword match
+  // FAQ match
   const match = findBestMatch(userMessage, faq);
   if (match) {
     chat.messages.push({ role: "model", content: match.answer });
@@ -142,14 +164,16 @@ app.post("/chat", async (req, res) => {
     return res.json({ reply: match.answer });
   }
 
+  // Gemini fallback — log as unanswered
+  await Unanswered.create({ question: userMessage, userId });
+
   try {
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: `
+        contents: [{
+          role: "user",
+          parts: [{ text: `
 You are a customer support assistant for an online store.
 
 Rules:
@@ -167,25 +191,18 @@ ${chat.messages.map(m => `${m.role}: ${m.content}`).join("\n")}
 
 User: ${userMessage}
 ` }]
-          }
-        ]
+        }]
       }
     );
 
     const reply = response.data.candidates[0].content.parts[0].text;
-
-    // 3. Save after reply
     chat.messages.push({ role: "model", content: reply });
-    console.log("Saving to DB...");
     await chat.save();
-
     res.json({ reply });
 
   } catch (error) {
     console.error("FULL ERROR:", error.response?.data || error.message);
-    return res.json({
-      reply: "Server is busy right now. Please try again in a moment 🙏"
-    });
+    return res.json({ reply: "Server is busy right now. Please try again in a moment 🙏" });
   }
 });
 
@@ -193,20 +210,13 @@ app.post("/reset", async (req, res) => {
   const { userId } = req.body;
   await Chat.updateOne(
     { userId },
-    { $set: { awaitingOrderId: false, messages: [] } },
+    { $set: { awaitingOrderId: false, requestedHuman: false, messages: [] } },
     { upsert: true }
   );
   res.sendStatus(200);
 });
 
-app.delete("/admin/chats/:id", async (req, res) => {
-  try {
-    await Chat.findByIdAndDelete(req.params.id);
-    res.send("Deleted");
-  } catch (err) {
-    res.status(500).send("Error deleting");
-  }
-});
+// ── Admin routes ──────────────────────────────────────────────────────────────
 
 app.get("/admin/chats", async (req, res) => {
   try {
@@ -218,7 +228,41 @@ app.get("/admin/chats", async (req, res) => {
   }
 });
 
-// Start server
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.delete("/admin/chats/:id", async (req, res) => {
+  try {
+    await Chat.findByIdAndDelete(req.params.id);
+    res.send("Deleted");
+  } catch (err) {
+    res.status(500).send("Error deleting");
+  }
 });
+
+app.get("/admin/unanswered", async (req, res) => {
+  try {
+    const questions = await Unanswered.find().sort({ _id: -1 }).limit(100);
+    res.json(questions);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch unanswered questions" });
+  }
+});
+
+app.get("/admin/export", async (req, res) => {
+  try {
+    const chats = await Chat.find().sort({ _id: -1 });
+    const rows = ["userId,role,content,timestamp"];
+    chats.forEach(chat => {
+      chat.messages.forEach(msg => {
+        const content = msg.content.replace(/"/g, '""');
+        rows.push(`"${chat.userId}","${msg.role}","${content}","${msg.timestamp || ""}"`);
+      });
+    });
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=chats.csv");
+    res.send(rows.join("\n"));
+  } catch (error) {
+    res.status(500).send("Export failed");
+  }
+});
+
+// Start server
+app.listen(3000, () => console.log("Server running on port 3000"));
