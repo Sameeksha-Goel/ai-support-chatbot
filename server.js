@@ -149,7 +149,22 @@ app.post("/chat", async (req, res) => {
         await chat.save();
         return res.json({ reply });
       }
-      const reply = `Here are the details for Order #${orderId}:`;
+      const status = order.status.toLowerCase();
+      let reply;
+      if (status.includes("out for delivery")) {
+        reply = `Great news! 🎉 Your order #${orderId} (${order.item}) is out for delivery and arriving ${order.estimatedDelivery}!`;
+      } else if (status.includes("shipped")) {
+        reply = `Your order #${orderId} (${order.item}) has been shipped via ${order.carrier} and is expected to arrive by ${order.estimatedDelivery}. 🚚`;
+      } else if (status.includes("delivered")) {
+        reply = `Your order #${orderId} (${order.item}) was delivered on ${order.estimatedDelivery}. ✅ Hope you're enjoying it!`;
+      } else if (status.includes("processing")) {
+        reply = `Your order #${orderId} (${order.item}) is currently being processed and will be shipped soon. Estimated arrival: ${order.estimatedDelivery}. 📦`;
+      } else if (status.includes("returned")) {
+        reply = `Your order #${orderId} (${order.item}) has been returned and is being processed by our team. 🔄`;
+      } else {
+        reply = `Your order #${orderId} (${order.item}) status: ${order.status}. Expected arrival: ${order.estimatedDelivery}.`;
+      }
+
       chat.awaitingOrderId = false;
       chat.messages.push({ role: "model", content: reply });
       await chat.save();
