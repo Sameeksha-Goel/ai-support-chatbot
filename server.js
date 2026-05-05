@@ -93,20 +93,20 @@ app.post("/chat", async (req, res) => {
   // 3. If awaiting order ID → look it up
   if (chat.awaitingOrderId) {
     const orderId = userMessage.match(/\d+/)?.[0];
-    let reply;
 
-    if (orderId && orders[orderId]) {
-      reply = `Order ${orderId} is ${orders[orderId].status} and will arrive ${orders[orderId].deliveryDate}.`;
-    } else if (orderId) {
-      reply = "Sorry, I couldn't find that order number.";
-    } else {
-      reply = "Please enter a valid order number.";
+    if (orderId) {
+      const reply = orders[orderId]
+        ? `Order ${orderId} is ${orders[orderId].status} and will arrive ${orders[orderId].deliveryDate}.`
+        : "Sorry, I couldn't find that order number.";
+
+      chat.awaitingOrderId = false;
+      chat.messages.push({ role: "model", content: reply });
+      await chat.save();
+      return res.json({ reply });
     }
 
+    // No number found — reset flag and fall through to normal processing
     chat.awaitingOrderId = false;
-    chat.messages.push({ role: "model", content: reply });
-    await chat.save();
-    return res.json({ reply });
   }
 
   // 4. Intent detection
