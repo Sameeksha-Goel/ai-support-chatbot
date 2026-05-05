@@ -10,23 +10,21 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.error("Mongo error:", err));
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// ── Schemas ──────────────────────────────────────────────────────────────────
+// ── Schemas ───────────────────────────────────────────────────────────────────
 
 const ChatSchema = new mongoose.Schema({
   userId: String,
-  awaitingOrderId: { type: Boolean, default: false },
-  requestedHuman: { type: Boolean, default: false },
-  messages: [
-    {
-      role: String,
-      content: String,
-      timestamp: { type: Date, default: Date.now },
-    }
-  ],
+  awaitingOrderId:       { type: Boolean, default: false },
+  awaitingDamageOrderId: { type: Boolean, default: false },
+  requestedHuman:        { type: Boolean, default: false },
+  messages: [{
+    role: String,
+    content: String,
+    timestamp: { type: Date, default: Date.now },
+  }],
 });
 
 const OrderSchema = new mongoose.Schema({
@@ -43,56 +41,29 @@ const OrderSchema = new mongoose.Schema({
 });
 
 const UnansweredSchema = new mongoose.Schema({
-  question: String,
-  userId: String,
+  question:  String,
+  userId:    String,
   timestamp: { type: Date, default: Date.now },
 });
 
-const Chat = mongoose.model("Chat", ChatSchema);
-const Order = mongoose.model("Order", OrderSchema);
-const Unanswered = mongoose.model("Unanswered", UnansweredSchema);
+const Chat        = mongoose.model("Chat",        ChatSchema);
+const Order       = mongoose.model("Order",       OrderSchema);
+const Unanswered  = mongoose.model("Unanswered",  UnansweredSchema);
 
-// ── Seed orders (always replace to keep data fresh) ───────────────────────────
+// ── Seed orders ───────────────────────────────────────────────────────────────
 async function seedOrders() {
   await Order.deleteMany({});
   await Order.insertMany([
-    {
-      orderId: "16452", item: "Wireless Headphones", quantity: 1, price: "₹2,499",
-      status: "Shipped", placedDate: "28 Apr 2026", shippedDate: "30 Apr 2026",
-      estimatedDelivery: "5 May 2026", trackingNumber: "FX9823741", carrier: "FedEx",
-    },
-    {
-      orderId: "29831", item: "Running Shoes (Size 9)", quantity: 1, price: "₹3,199",
-      status: "Out for Delivery", placedDate: "1 May 2026", shippedDate: "3 May 2026",
-      estimatedDelivery: "5 May 2026", trackingNumber: "DL4472910", carrier: "Delhivery",
-    },
-    {
-      orderId: "38820", item: "Laptop Stand + USB Hub", quantity: 1, price: "₹1,899",
-      status: "Processing", placedDate: "4 May 2026", shippedDate: "—",
-      estimatedDelivery: "9 May 2026", trackingNumber: "—", carrier: "—",
-    },
-    {
-      orderId: "47193", item: "Phone Case (iPhone 15)", quantity: 2, price: "₹599",
-      status: "Delivered", placedDate: "20 Apr 2026", shippedDate: "22 Apr 2026",
-      estimatedDelivery: "26 Apr 2026", trackingNumber: "BL2291048", carrier: "BlueDart",
-    },
-    {
-      orderId: "55310", item: "Mechanical Keyboard", quantity: 1, price: "₹4,799",
-      status: "Shipped", placedDate: "2 May 2026", shippedDate: "4 May 2026",
-      estimatedDelivery: "7 May 2026", trackingNumber: "EC7731820", carrier: "Ecom Express",
-    },
-    {
-      orderId: "61847", item: "Yoga Mat + Resistance Bands", quantity: 1, price: "₹1,299",
-      status: "Returned", placedDate: "15 Apr 2026", shippedDate: "17 Apr 2026",
-      estimatedDelivery: "21 Apr 2026", trackingNumber: "SH0039271", carrier: "Shiprocket",
-    },
+    { orderId: "16452", item: "Wireless Headphones",       quantity: 1, price: "₹2,499", status: "Shipped",           placedDate: "28 Apr 2026", shippedDate: "30 Apr 2026", estimatedDelivery: "5 May 2026",  trackingNumber: "FX9823741", carrier: "FedEx"         },
+    { orderId: "29831", item: "Running Shoes (Size 9)",    quantity: 1, price: "₹3,199", status: "Out for Delivery",   placedDate: "1 May 2026",  shippedDate: "3 May 2026",  estimatedDelivery: "6 May 2026",  trackingNumber: "DL4472910", carrier: "Delhivery"     },
+    { orderId: "38820", item: "Laptop Stand + USB Hub",    quantity: 1, price: "₹1,899", status: "Processing",         placedDate: "4 May 2026",  shippedDate: "—",           estimatedDelivery: "9 May 2026",  trackingNumber: "—",         carrier: "—"             },
+    { orderId: "47193", item: "Phone Case (iPhone 15)",    quantity: 2, price: "₹599",   status: "Delivered",          placedDate: "20 Apr 2026", shippedDate: "22 Apr 2026", estimatedDelivery: "26 Apr 2026", trackingNumber: "BL2291048", carrier: "BlueDart"      },
+    { orderId: "55310", item: "Mechanical Keyboard",       quantity: 1, price: "₹4,799", status: "Shipped",            placedDate: "2 May 2026",  shippedDate: "4 May 2026",  estimatedDelivery: "7 May 2026",  trackingNumber: "EC7731820", carrier: "Ecom Express"  },
+    { orderId: "61847", item: "Yoga Mat + Resistance Bands", quantity: 1, price: "₹1,299", status: "Returned",         placedDate: "15 Apr 2026", shippedDate: "17 Apr 2026", estimatedDelivery: "21 Apr 2026", trackingNumber: "SH0039271", carrier: "Shiprocket"    },
   ]);
   console.log("Orders seeded.");
 }
 mongoose.connection.once("open", seedOrders);
-
-// ── Sessions ──────────────────────────────────────────────────────────────────
-const sessions = {};
 
 // ── FAQ ───────────────────────────────────────────────────────────────────────
 const faq = [
@@ -101,33 +72,42 @@ const faq = [
   { keywords: ["cancel", "cancellation"], answer: "Orders cannot be cancelled once placed." },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function detectIntent(message) {
-  const msg = message.toLowerCase();
-  if (msg.includes("human") || msg.includes("agent") || msg.includes("real person") || msg.includes("speak to someone")) return "human_handoff";
-  if (msg.includes("broken") || msg.includes("damaged") || msg.includes("defective") || msg.includes("wrong item") || msg.includes("not working") || msg.includes("faulty") || msg.includes("cracked") || msg.includes("missing item")) return "damaged_product";
-  if (msg.includes("track")) return "track_order";
-  if (msg.includes("delivery") || msg.includes("shipping")) return "delivery_info";
-  if (msg.includes("cancel") || msg.includes("cancellation")) return "cancel_order";
+// ── Intent detection ──────────────────────────────────────────────────────────
+function detectIntent(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes("human") || m.includes("agent") || m.includes("real person") || m.includes("speak to someone")) return "human_handoff";
+  if (m.includes("broken") || m.includes("damaged") || m.includes("defective") || m.includes("wrong item") || m.includes("not working") || m.includes("faulty") || m.includes("cracked") || m.includes("missing item")) return "damaged_product";
+  if (m.includes("late") || m.includes("overdue") || m.includes("not arrived") || m.includes("been waiting") || m.includes("expected delivery") || m.includes("still not received") || m.includes("delayed")) return "late_delivery";
+  if (m.includes("exchange") || m.includes("wrong size") || m.includes("different size") || m.includes("wrong colour") || m.includes("wrong color") || m.includes("swap")) return "exchange";
+  if (m.includes("payment failed") || m.includes("charged twice") || m.includes("double charge") || m.includes("transaction failed") || m.includes("not charged") || m.includes("payment issue")) return "payment_issue";
+  if (m.includes("coupon") || m.includes("promo") || m.includes("discount code") || m.includes("voucher") || m.includes("promo code")) return "coupon_issue";
+  if (m.includes("invoice") || m.includes("receipt") || m.includes("gst") || m.includes("tax bill")) return "invoice";
+  if (m.includes("warranty") || m.includes("guarantee") || m.includes("manufacturing defect")) return "warranty";
+  if (m.includes("track")) return "track_order";
+  if (m.includes("delivery") || m.includes("shipping")) return "delivery_info";
+  if (m.includes("cancel") || m.includes("cancellation")) return "cancel_order";
   return "general";
 }
 
-function findBestMatch(userMessage, faq) {
-  let bestMatch = null;
-  let maxScore = 0;
-  for (let item of faq) {
-    let score = 0;
-    for (let keyword of item.keywords) {
-      if (userMessage.includes(keyword)) score++;
-    }
-    if (score > maxScore) { maxScore = score; bestMatch = item; }
+function findBestMatch(msg, faq) {
+  let best = null, max = 0;
+  for (const item of faq) {
+    const score = item.keywords.filter(k => msg.includes(k)).length;
+    if (score > max) { max = score; best = item; }
   }
-  return maxScore > 0 ? bestMatch : null;
+  return max > 0 ? best : null;
 }
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 app.get("/", (req, res) => res.send("Gemini chatbot server running!"));
+
+// Chat history for page reload
+app.get("/chat-history", async (req, res) => {
+  const { userId } = req.query;
+  const chat = await Chat.findOne({ userId });
+  res.json({ messages: chat ? chat.messages : [] });
+});
 
 app.post("/chat", async (req, res) => {
   const { message, userId } = req.body;
@@ -138,7 +118,27 @@ app.post("/chat", async (req, res) => {
 
   chat.messages.push({ role: "user", content: userMessage });
 
-  // Awaiting order ID
+  // ── Awaiting damage order ID ──────────────────────────────────────────────
+  if (chat.awaitingDamageOrderId) {
+    const orderId = userMessage.match(/\d+/)?.[0];
+    if (orderId) {
+      const order = await Order.findOne({ orderId });
+      const reply = order
+        ? `Damage report filed for Order #${orderId} (${order.item}). 📋 Our team will review the photos and contact you within **24 hours** with a resolution. Thank you for your patience! 🙏`
+        : `We've logged your damage report. We couldn't find order #${orderId} in our system — please double-check the ID or contact our support team directly.`;
+      chat.awaitingDamageOrderId = false;
+      chat.messages.push({ role: "model", content: reply });
+      await chat.save();
+      return res.json({ reply });
+    }
+    // Not a number — remind and wait
+    const reply = "Please share your **order ID** (e.g. 16452) so we can file the damage report. 📋";
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  // ── Awaiting track order ID ───────────────────────────────────────────────
   if (chat.awaitingOrderId) {
     const orderId = userMessage.match(/\d+/)?.[0];
     if (orderId) {
@@ -150,22 +150,14 @@ app.post("/chat", async (req, res) => {
         await chat.save();
         return res.json({ reply });
       }
-      const status = order.status.toLowerCase();
+      const s = order.status.toLowerCase();
       let reply;
-      if (status.includes("out for delivery")) {
-        reply = `Great news! 🎉 Your order #${orderId} (${order.item}) is out for delivery and arriving ${order.estimatedDelivery}!`;
-      } else if (status.includes("shipped")) {
-        reply = `Your order #${orderId} (${order.item}) has been shipped via ${order.carrier} and is expected to arrive by ${order.estimatedDelivery}. 🚚`;
-      } else if (status.includes("delivered")) {
-        reply = `Your order #${orderId} (${order.item}) was delivered on ${order.estimatedDelivery}. ✅ Hope you're enjoying it!`;
-      } else if (status.includes("processing")) {
-        reply = `Your order #${orderId} (${order.item}) is currently being processed and will be shipped soon. Estimated arrival: ${order.estimatedDelivery}. 📦`;
-      } else if (status.includes("returned")) {
-        reply = `Your order #${orderId} (${order.item}) has been returned and is being processed by our team. 🔄`;
-      } else {
-        reply = `Your order #${orderId} (${order.item}) status: ${order.status}. Expected arrival: ${order.estimatedDelivery}.`;
-      }
-
+      if (s.includes("out for delivery")) reply = `Great news! 🎉 Your order #${orderId} (${order.item}) is **out for delivery** and arriving ${order.estimatedDelivery}!`;
+      else if (s.includes("shipped"))     reply = `Your order #${orderId} (${order.item}) has been **shipped** via ${order.carrier} and is expected to arrive by **${order.estimatedDelivery}**. 🚚`;
+      else if (s.includes("delivered"))   reply = `Your order #${orderId} (${order.item}) was **delivered** on ${order.estimatedDelivery}. ✅ Hope you're enjoying it!`;
+      else if (s.includes("processing"))  reply = `Your order #${orderId} (${order.item}) is currently being **processed** and will ship soon. Estimated arrival: **${order.estimatedDelivery}**. 📦`;
+      else if (s.includes("returned"))    reply = `Your order #${orderId} (${order.item}) has been **returned** and is being processed by our team. 🔄`;
+      else reply = `Your order #${orderId} (${order.item}) status: **${order.status}**. Expected arrival: ${order.estimatedDelivery}.`;
       chat.awaitingOrderId = false;
       chat.messages.push({ role: "model", content: reply });
       await chat.save();
@@ -174,7 +166,7 @@ app.post("/chat", async (req, res) => {
     chat.awaitingOrderId = false;
   }
 
-  // Intent detection
+  // ── Intent detection ──────────────────────────────────────────────────────
   const intent = detectIntent(userMessage);
 
   if (intent === "human_handoff") {
@@ -183,6 +175,57 @@ app.post("/chat", async (req, res) => {
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply, humanHandoff: true });
+  }
+
+  if (intent === "damaged_product") {
+    const reply = `We're really sorry to hear that! 😔 Here's what to do:\n\n1. Take clear photos of the damaged/incorrect item\n2. Share your order ID with us below\n3. Tell us whether you'd prefer a **replacement** or a **full refund**\n\nPlease go ahead and share your order ID to get started.`;
+    chat.awaitingDamageOrderId = true;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  if (intent === "late_delivery") {
+    const reply = `We're sorry your order hasn't arrived yet! 😟 Deliveries can occasionally be delayed due to logistics or local conditions.\n\nPlease share your **order ID** and we'll track it down right away. If needed, we can escalate to our delivery partner.`;
+    chat.awaitingOrderId = true;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  if (intent === "exchange") {
+    const reply = `We offer **exchanges within 7 days** of delivery for size or colour issues. Here's how:\n\n1. Share your **order ID** and photos of the item\n2. Let us know what you'd like instead (size/colour)\n3. We'll arrange a pickup and send the replacement\n\nWould you like to proceed?`;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  if (intent === "payment_issue") {
+    const reply = `We're sorry about the payment issue! 😟 Here's what to know:\n\n- If your payment **failed**, you won't be charged — the amount will be reversed within **3–5 business days**\n- If you were **charged twice**, please share your order ID and we'll resolve it within **24 hours**\n\nPlease share your order ID to proceed.`;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  if (intent === "coupon_issue") {
+    const reply = `Coupon not working? Here are the most common reasons:\n\n- ❌ Coupon has **expired**\n- ❌ Minimum cart value **not met**\n- ❌ Coupon already **used once**\n- ❌ Not applicable on **sale items**\n- ❌ **Case-sensitive** — try typing it exactly\n\nIf none of these apply, our agent can check it manually. Want me to connect you?`;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  if (intent === "invoice") {
+    const reply = `Your invoice is **automatically emailed** after delivery. 📧\n\nYou can also download it from your account's order history page.\n\nIf you haven't received it, please share your **order ID** and we'll resend it right away.`;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  if (intent === "warranty") {
+    const reply = `Most products come with a **6-month manufacturer warranty** against defects. 🛡️\n\nFor warranty claims:\n1. Share your **order ID** and photos/video of the defect\n2. We'll arrange a **repair or replacement** at no cost\n\nNote: Warranty does not cover physical damage or misuse.`;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
   }
 
   if (intent === "track_order") {
@@ -194,21 +237,14 @@ app.post("/chat", async (req, res) => {
   }
 
   if (intent === "delivery_info") {
-    const reply = "Delivery usually takes 3–5 business days.";
-    chat.messages.push({ role: "model", content: reply });
-    await chat.save();
-    return res.json({ reply });
-  }
-
-  if (intent === "damaged_product") {
-    const reply = `We're really sorry to hear that! 😔 Here's what to do:\n\n1. Take clear photos of the damaged/incorrect item\n2. Share your order ID with us\n3. Tell us whether you'd prefer a replacement or a full refund\n\nWe'll get this sorted for you within 24–48 hours. 🙏`;
+    const reply = "Delivery usually takes **3–5 business days**. 🚚";
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
   }
 
   if (intent === "cancel_order") {
-    const reply = "Orders cannot be cancelled once placed.";
+    const reply = "Orders **cannot be cancelled** once placed. If you'd like a refund, please reach out within 7 days of delivery.";
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
@@ -222,7 +258,7 @@ app.post("/chat", async (req, res) => {
     return res.json({ reply: match.answer });
   }
 
-  // Gemini fallback — log as unanswered
+  // Gemini fallback
   await Unanswered.create({ question: userMessage, userId });
 
   try {
@@ -240,11 +276,16 @@ Rules:
 - Do NOT ask multiple questions
 - Never say "it depends"
 - Be empathetic when the customer has a problem
+- Use **bold** for key terms
 - Use this info:
-  - Delivery takes 3–5 days
-  - Orders cannot be cancelled
-  - Refunds within 7 days
-  - For damaged, defective, or wrong items: ask for photos and order ID, offer replacement or refund within 24–48 hours
+  - Delivery: 3–5 business days
+  - Cancellations: not allowed once placed
+  - Refunds: within 7 days of delivery
+  - Damaged/defective/wrong items: ask for photos + order ID, offer replacement or refund within 24–48 hours
+  - Exchanges: within 7 days, for size or colour issues
+  - Payments: failed payments are reversed in 3–5 business days
+  - Warranty: 6-month manufacturer warranty on most products
+  - Invoice: auto-emailed after delivery, available in order history
 
 Conversation:
 ${chat.messages.map(m => `${m.role}: ${m.content}`).join("\n")}
@@ -270,7 +311,7 @@ app.post("/reset", async (req, res) => {
   const { userId } = req.body;
   await Chat.updateOne(
     { userId },
-    { $set: { awaitingOrderId: false, requestedHuman: false, messages: [] } },
+    { $set: { awaitingOrderId: false, awaitingDamageOrderId: false, requestedHuman: false, messages: [] } },
     { upsert: true }
   );
   res.sendStatus(200);
@@ -324,5 +365,4 @@ app.get("/admin/export", async (req, res) => {
   }
 });
 
-// Start server
 app.listen(3000, () => console.log("Server running on port 3000"));

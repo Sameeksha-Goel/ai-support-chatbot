@@ -475,11 +475,84 @@
   let chatStarted = false;
   let isDark = localStorage.getItem("theme") !== "light";
 
+  // ── Markdown renderer ──────────────────────────────────────────────────────
+  function renderMarkdown(text) {
+    // Escape raw HTML to prevent XSS
+    let s = text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    // Bold: **text**
+    s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    // Line breaks
+    s = s.replace(/\n/g, "<br>");
+    return s;
+  }
+
   // Apply saved theme
   if (!isDark) {
     document.documentElement.setAttribute("data-theme", "light");
     document.getElementById("theme-btn").textContent = "☀️";
   }
+
+  // ── Load previous chat history on page start ───────────────────────────────
+  async function loadHistory() {
+    try {
+      const res = await fetch(`https://ai-support-chatbot-ql1c.onrender.com/chat-history?userId=${userId}`);
+      const data = await res.json();
+      if (!data.messages || data.messages.length === 0) return;
+
+      showChat();
+      const chatBox = document.getElementById("chat-box");
+
+      data.messages.forEach(msg => {
+        const timeStr = msg.timestamp
+          ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          : "";
+        const row = document.createElement("div");
+        row.classList.add("message-row", msg.role === "user" ? "user" : "bot");
+
+        if (msg.role !== "user") {
+          const inner = document.createElement("div");
+          inner.classList.add("bot-row-inner");
+          const avatar = document.createElement("div");
+          avatar.classList.add("bot-avatar");
+          avatar.textContent = "✦";
+          const bubble = document.createElement("div");
+          bubble.classList.add("bubble");
+          bubble.innerHTML = renderMarkdown(msg.content);
+          inner.appendChild(avatar);
+          inner.appendChild(bubble);
+          row.appendChild(inner);
+        } else {
+          const bubble = document.createElement("div");
+          bubble.classList.add("bubble");
+          bubble.textContent = msg.content;
+          row.appendChild(bubble);
+        }
+
+        const meta = document.createElement("div");
+        meta.classList.add("msg-meta");
+        const ts = document.createElement("span");
+        ts.classList.add("timestamp");
+        ts.textContent = timeStr;
+        meta.appendChild(ts);
+        if (msg.role === "user") {
+          const receipt = document.createElement("span");
+          receipt.classList.add("receipt", "delivered");
+          receipt.textContent = "✓";
+          meta.appendChild(receipt);
+        }
+        row.appendChild(meta);
+        chatBox.appendChild(row);
+      });
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    } catch (e) {
+      // silently ignore if history fails to load
+    }
+  }
+  loadHistory();
 
   function toggleTheme() {
     isDark = !isDark;
@@ -506,13 +579,14 @@
     return "default";
   }
 
-  // ── Typing simulation ──────────────────────────────────────────────────────
+  // ── Typing simulation (markdown-aware) ────────────────────────────────────
   function typeText(element, text, onDone) {
     element.textContent = "";
     let i = 0;
     const speed = Math.max(12, Math.min(30, 1200 / text.length));
     const interval = setInterval(() => {
-      element.textContent += text[i++];
+      i++;
+      element.innerHTML = renderMarkdown(text.slice(0, i));
       if (i >= text.length) {
         clearInterval(interval);
         if (onDone) onDone();
