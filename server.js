@@ -30,10 +30,16 @@ const ChatSchema = new mongoose.Schema({
 });
 
 const OrderSchema = new mongoose.Schema({
-  orderId: { type: String, unique: true },
-  status: String,
-  deliveryDate: String,
-  item: String,
+  orderId:           { type: String, unique: true },
+  item:              String,
+  quantity:          Number,
+  price:             String,
+  status:            String,
+  placedDate:        String,
+  shippedDate:       String,
+  estimatedDelivery: String,
+  trackingNumber:    String,
+  carrier:           String,
 });
 
 const UnansweredSchema = new mongoose.Schema({
@@ -46,18 +52,42 @@ const Chat = mongoose.model("Chat", ChatSchema);
 const Order = mongoose.model("Order", OrderSchema);
 const Unanswered = mongoose.model("Unanswered", UnansweredSchema);
 
-// ── Seed orders if none exist ─────────────────────────────────────────────────
+// ── Seed orders (always replace to keep data fresh) ───────────────────────────
 async function seedOrders() {
-  const count = await Order.countDocuments();
-  if (count === 0) {
-    await Order.insertMany([
-      { orderId: "16452", status: "Shipped", deliveryDate: "in 2 days", item: "Wireless Headphones" },
-      { orderId: "29831", status: "Out for delivery", deliveryDate: "today", item: "Running Shoes" },
-      { orderId: "38820", status: "Processing", deliveryDate: "in 5 days", item: "Laptop Stand" },
-      { orderId: "47193", status: "Delivered", deliveryDate: "yesterday", item: "Phone Case" },
-    ]);
-    console.log("Orders seeded.");
-  }
+  await Order.deleteMany({});
+  await Order.insertMany([
+    {
+      orderId: "16452", item: "Wireless Headphones", quantity: 1, price: "₹2,499",
+      status: "Shipped", placedDate: "28 Apr 2026", shippedDate: "30 Apr 2026",
+      estimatedDelivery: "5 May 2026", trackingNumber: "FX9823741", carrier: "FedEx",
+    },
+    {
+      orderId: "29831", item: "Running Shoes (Size 9)", quantity: 1, price: "₹3,199",
+      status: "Out for Delivery", placedDate: "1 May 2026", shippedDate: "3 May 2026",
+      estimatedDelivery: "5 May 2026", trackingNumber: "DL4472910", carrier: "Delhivery",
+    },
+    {
+      orderId: "38820", item: "Laptop Stand + USB Hub", quantity: 1, price: "₹1,899",
+      status: "Processing", placedDate: "4 May 2026", shippedDate: "—",
+      estimatedDelivery: "9 May 2026", trackingNumber: "—", carrier: "—",
+    },
+    {
+      orderId: "47193", item: "Phone Case (iPhone 15)", quantity: 2, price: "₹599",
+      status: "Delivered", placedDate: "20 Apr 2026", shippedDate: "22 Apr 2026",
+      estimatedDelivery: "26 Apr 2026", trackingNumber: "BL2291048", carrier: "BlueDart",
+    },
+    {
+      orderId: "55310", item: "Mechanical Keyboard", quantity: 1, price: "₹4,799",
+      status: "Shipped", placedDate: "2 May 2026", shippedDate: "4 May 2026",
+      estimatedDelivery: "7 May 2026", trackingNumber: "EC7731820", carrier: "Ecom Express",
+    },
+    {
+      orderId: "61847", item: "Yoga Mat + Resistance Bands", quantity: 1, price: "₹1,299",
+      status: "Returned", placedDate: "15 Apr 2026", shippedDate: "17 Apr 2026",
+      estimatedDelivery: "21 Apr 2026", trackingNumber: "SH0039271", carrier: "Shiprocket",
+    },
+  ]);
+  console.log("Orders seeded.");
 }
 mongoose.connection.once("open", seedOrders);
 
@@ -113,7 +143,7 @@ app.post("/chat", async (req, res) => {
     if (orderId) {
       const order = await Order.findOne({ orderId });
       const reply = order
-        ? `Order ${orderId} (${order.item}) is ${order.status} — arriving ${order.deliveryDate}.`
+        ? `Order #${orderId} — ${order.item}\n📦 Status: ${order.status}\n💰 Price: ${order.price} (Qty: ${order.quantity})\n📅 Placed: ${order.placedDate}\n🚚 Shipped: ${order.shippedDate} via ${order.carrier}\n📬 Arriving: ${order.estimatedDelivery}\n🔢 Tracking: ${order.trackingNumber}`
         : "Sorry, I couldn't find that order number. Please check and try again.";
       chat.awaitingOrderId = false;
       chat.messages.push({ role: "model", content: reply });
