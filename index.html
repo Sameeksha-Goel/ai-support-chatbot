@@ -290,6 +290,54 @@
       padding: 0 4px;
     }
 
+    /* ── Satisfaction Prompt ── */
+    .follow-up-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .follow-up-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      border: 1px solid #2a2a2a;
+      background: #1a1a1a;
+      color: #aaa;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .follow-up-btn.yes:hover {
+      border-color: #4ade80;
+      color: #4ade80;
+      background: rgba(74,222,128,0.08);
+    }
+
+    .follow-up-btn.no:hover {
+      border-color: #c9b800;
+      color: #c9b800;
+      background: rgba(201,184,0,0.08);
+    }
+
+    .close-chat-btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      border: 1px solid #4ade80;
+      background: rgba(74,222,128,0.08);
+      color: #4ade80;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .close-chat-btn:hover { background: rgba(74,222,128,0.16); }
+
     /* ── Typing ── */
     .typing-bubble {
       display: flex;
@@ -511,6 +559,14 @@
 
         addMessage(displayMsg, "bot");
         sendBtn.disabled = false;
+
+        const skipFollowUp = [
+          "please enter your order id",
+          "please enter a valid order number",
+          "server is busy"
+        ];
+        const shouldShow = !skipFollowUp.some(s => displayMsg.toLowerCase().includes(s));
+        if (shouldShow) setTimeout(() => addSatisfactionPrompt(), 600);
       }, 800);
 
     } catch (err) {
@@ -560,6 +616,60 @@
     chatBox.scrollTop = chatBox.scrollHeight;
 
     return row;
+  }
+
+  function addSatisfactionPrompt() {
+    const chatBox = document.getElementById("chat-box");
+
+    const row = document.createElement("div");
+    row.classList.add("message-row", "bot");
+
+    const inner = document.createElement("div");
+    inner.classList.add("bot-row-inner");
+
+    const avatar = document.createElement("div");
+    avatar.classList.add("bot-avatar");
+    avatar.textContent = "✦";
+
+    const bubble = document.createElement("div");
+    bubble.classList.add("bubble");
+    bubble.textContent = "Was that helpful? 😊";
+
+    const btns = document.createElement("div");
+    btns.classList.add("follow-up-btns");
+
+    const yesBtn = document.createElement("button");
+    yesBtn.classList.add("follow-up-btn", "yes");
+    yesBtn.textContent = "Yes, thanks! ✅";
+    yesBtn.onclick = () => {
+      bubble.textContent = "Glad I could help! 👋";
+      btns.remove();
+
+      const closeBtn = document.createElement("button");
+      closeBtn.classList.add("close-chat-btn");
+      closeBtn.textContent = "Close chat";
+      closeBtn.onclick = goBack;
+      bubble.appendChild(document.createElement("br"));
+      bubble.appendChild(closeBtn);
+
+      chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    const noBtn = document.createElement("button");
+    noBtn.classList.add("follow-up-btn", "no");
+    noBtn.textContent = "No, I need more help ❓";
+    noBtn.onclick = () => row.remove();
+
+    btns.appendChild(yesBtn);
+    btns.appendChild(noBtn);
+    bubble.appendChild(btns);
+
+    inner.appendChild(avatar);
+    inner.appendChild(bubble);
+    row.appendChild(inner);
+
+    chatBox.appendChild(row);
+    chatBox.scrollTop = chatBox.scrollHeight;
   }
 
   function addTypingIndicator() {
