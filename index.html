@@ -765,15 +765,10 @@
     yesBtn.classList.add("follow-up-btn", "yes");
     yesBtn.textContent = "Yes, thanks! ✅";
     yesBtn.onclick = () => {
-      bubble.textContent = "Glad I could help! 👋";
       btns.remove();
-      const closeBtn = document.createElement("button");
-      closeBtn.classList.add("close-chat-btn");
-      closeBtn.textContent = "Close chat";
-      closeBtn.onclick = goBack;
-      bubble.appendChild(document.createElement("br"));
-      bubble.appendChild(closeBtn);
+      bubble.textContent = "Glad I could help! 😊 This chat session is now closing...";
       chatBox.scrollTop = chatBox.scrollHeight;
+      setTimeout(goBack, 2000);
     };
 
     const noBtn = document.createElement("button");
