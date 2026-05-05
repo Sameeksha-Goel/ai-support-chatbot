@@ -16,6 +16,7 @@ app.use(express.json());
 
 const ChatSchema = new mongoose.Schema({
   userId: String,
+  awaitingOrderId: { type: Boolean, default: false },
   messages: [
     {
       role: String,
@@ -41,6 +42,14 @@ const faq = [
   { keywords: ["delivery", "shipping"], answer: "Delivery takes 3–5 business days." },
   { keywords: ["cancel", "cancellation"], answer: "Orders cannot be cancelled once placed." },
 ];
+
+function detectIntent(message) {
+  const msg = message.toLowerCase();
+  if (msg.includes("track")) return "track_order";
+  if (msg.includes("delivery") || msg.includes("shipping")) return "delivery_info";
+  if (msg.includes("cancel") || msg.includes("cancellation")) return "cancel_order";
+  return "general";
+}
 
 function findBestMatch(userMessage, faq) {
   let bestMatch = null;
@@ -78,35 +87,59 @@ app.post("/chat", async (req, res) => {
     chat = new Chat({ userId, messages: [] });
   }
 
-  // Keep in-memory session in sync with DB
-  sessions[userId] = chat.messages;
-  const chatHistory = sessions[userId];
-
   // 2. Add user message
   chat.messages.push({ role: "user", content: userMessage });
 
-  const match = findBestMatch(userMessage, faq);
-  if (match) {
-    chat.messages.push({
-      role: "model",
-      content: match.answer,
-    });
+  // 3. If awaiting order ID → look it up
+  if (chat.awaitingOrderId) {
+    const orderId = userMessage.match(/\d+/)?.[0];
+    let reply;
 
-    await chat.save();
+    if (orderId && orders[orderId]) {
+      reply = `Order ${orderId} is ${orders[orderId].status} and will arrive ${orders[orderId].deliveryDate}.`;
+    } else if (orderId) {
+      reply = "Sorry, I couldn't find that order number.";
+    } else {
+      reply = "Please enter a valid order number.";
+    }
 
-    return res.json({ reply: match.answer });
-  }
-
-  const orderMatch = userMessage.match(/\d+/);
-  if (orderMatch) {
-    const orderId = orderMatch[0];
-    const reply = orders[orderId]
-      ? `Order ${orderId} is ${orders[orderId].status} and will arrive ${orders[orderId].deliveryDate}.`
-      : "Sorry, I couldn't find that order number.";
+    chat.awaitingOrderId = false;
     chat.messages.push({ role: "model", content: reply });
-    console.log("Saving to DB...");
     await chat.save();
     return res.json({ reply });
+  }
+
+  // 4. Intent detection
+  const intent = detectIntent(userMessage);
+
+  if (intent === "track_order") {
+    const reply = "Please enter your order ID to track your order.";
+    chat.awaitingOrderId = true;
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  if (intent === "delivery_info") {
+    const reply = "Delivery usually takes 3–5 business days.";
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  if (intent === "cancel_order") {
+    const reply = "Orders cannot be cancelled once placed.";
+    chat.messages.push({ role: "model", content: reply });
+    await chat.save();
+    return res.json({ reply });
+  }
+
+  // 5. FAQ keyword match
+  const match = findBestMatch(userMessage, faq);
+  if (match) {
+    chat.messages.push({ role: "model", content: match.answer });
+    await chat.save();
+    return res.json({ reply: match.answer });
   }
 
   try {
@@ -153,6 +186,16 @@ User: ${userMessage}
     console.error("FULL ERROR:", errMsg);
     res.json({ reply: `Error: ${errMsg}` }); // frontend reads this to show friendly messages
   }
+});
+
+app.post("/reset", async (req, res) => {
+  const { userId } = req.body;
+  await Chat.updateOne(
+    { userId },
+    { $set: { awaitingOrderId: false, messages: [] } },
+    { upsert: true }
+  );
+  res.sendStatus(200);
 });
 
 app.delete("/admin/chats/:id", async (req, res) => {

@@ -75,6 +75,28 @@
       letter-spacing: 0.02em;
     }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .reset-btn {
+      background: none;
+      border: 1px solid #2a2a2a;
+      color: #666;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .reset-btn:hover {
+      border-color: #c9b800;
+      color: #c9b800;
+    }
+
     .header-status {
       display: flex;
       align-items: center;
@@ -359,9 +381,12 @@
       <div class="brand-icon">A</div>
       <span class="brand-name">AI Support</span>
     </div>
-    <div class="header-status">
-      <span class="status-dot"></span>
-      Online
+    <div class="header-right">
+      <button class="reset-btn" onclick="resetChat()">↺ Reset</button>
+      <div class="header-status">
+        <span class="status-dot"></span>
+        Online
+      </div>
     </div>
   </div>
 
@@ -405,6 +430,19 @@
   localStorage.setItem("userId", userId);
 
   let chatStarted = false;
+
+  async function resetChat() {
+    await fetch("https://ai-support-chatbot-ql1c.onrender.com/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId })
+    });
+
+    document.getElementById("chat-box").innerHTML = "";
+    document.getElementById("chat-box").classList.add("hidden");
+    document.getElementById("welcome-screen").classList.remove("hidden");
+    chatStarted = false;
+  }
 
   function fillInput(text) {
     document.getElementById("input").value = text;
