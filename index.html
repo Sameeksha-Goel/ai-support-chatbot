@@ -382,7 +382,7 @@
       <span class="brand-name">AI Support</span>
     </div>
     <div class="header-right">
-      <button class="reset-btn" onclick="resetChat()">↺ Reset</button>
+      <button class="reset-btn" onclick="goBack()">← Back</button>
       <div class="header-status">
         <span class="status-dot"></span>
         Online
@@ -398,17 +398,17 @@
       <p>How can I help you today?</p>
     </div>
     <div class="feature-cards">
-      <div class="feature-card" onclick="fillInput('How do I get a refund?')">
+      <div class="feature-card" onclick="startChat('How do I get a refund?')">
         <div class="feature-icon">↩</div>
         <h4>Refund Policy</h4>
         <p>Learn about returns and refund eligibility</p>
       </div>
-      <div class="feature-card" onclick="fillInput('Where is my order?')">
+      <div class="feature-card" onclick="startChat('track order')">
         <div class="feature-icon">📦</div>
         <h4>Track Order</h4>
         <p>Check the status of your delivery</p>
       </div>
-      <div class="feature-card" onclick="fillInput('How long does delivery take?')">
+      <div class="feature-card" onclick="startChat('How long does delivery take?')">
         <div class="feature-icon">🚚</div>
         <h4>Delivery Info</h4>
         <p>Estimated shipping times and options</p>
@@ -431,7 +431,7 @@
 
   let chatStarted = false;
 
-  async function resetChat() {
+  async function goBack() {
     await fetch("https://ai-support-chatbot-ql1c.onrender.com/reset", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -442,6 +442,11 @@
     document.getElementById("chat-box").classList.add("hidden");
     document.getElementById("welcome-screen").classList.remove("hidden");
     chatStarted = false;
+  }
+
+  function startChat(msg) {
+    document.getElementById("input").value = msg;
+    send();
   }
 
   function fillInput(text) {
