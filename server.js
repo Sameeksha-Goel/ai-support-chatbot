@@ -142,13 +142,32 @@ app.post("/chat", async (req, res) => {
     const orderId = userMessage.match(/\d+/)?.[0];
     if (orderId) {
       const order = await Order.findOne({ orderId });
-      const reply = order
-        ? `Order #${orderId} — ${order.item}\n📦 Status: ${order.status}\n💰 Price: ${order.price} (Qty: ${order.quantity})\n📅 Placed: ${order.placedDate}\n🚚 Shipped: ${order.shippedDate} via ${order.carrier}\n📬 Arriving: ${order.estimatedDelivery}\n🔢 Tracking: ${order.trackingNumber}`
-        : "Sorry, I couldn't find that order number. Please check and try again.";
+      if (!order) {
+        const reply = "Sorry, I couldn't find that order number. Please check and try again.";
+        chat.awaitingOrderId = false;
+        chat.messages.push({ role: "model", content: reply });
+        await chat.save();
+        return res.json({ reply });
+      }
+      const reply = `Here are the details for Order #${orderId}:`;
       chat.awaitingOrderId = false;
       chat.messages.push({ role: "model", content: reply });
       await chat.save();
-      return res.json({ reply });
+      return res.json({
+        reply,
+        orderCard: {
+          orderId,
+          item:              order.item,
+          quantity:          order.quantity,
+          price:             order.price,
+          status:            order.status,
+          placedDate:        order.placedDate,
+          shippedDate:       order.shippedDate,
+          estimatedDelivery: order.estimatedDelivery,
+          trackingNumber:    order.trackingNumber,
+          carrier:           order.carrier,
+        }
+      });
     }
     chat.awaitingOrderId = false;
   }

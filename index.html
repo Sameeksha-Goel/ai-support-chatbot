@@ -247,6 +247,73 @@
     }
     .receipt.delivered { color: var(--accent); }
 
+    /* ── Order Card ── */
+    .order-card {
+      margin-top: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 12px;
+      overflow: hidden;
+      font-size: 13px;
+      min-width: 240px;
+    }
+
+    .order-card-header {
+      background: var(--accent);
+      color: #0a0a0a;
+      padding: 10px 14px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .order-card-header span {
+      font-size: 11px;
+      font-weight: 500;
+      opacity: 0.75;
+      display: block;
+      margin-top: 1px;
+    }
+
+    .order-card-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 14px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .order-card-row:last-child { border-bottom: none; }
+
+    .order-card-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+
+    .order-card-value {
+      color: var(--text);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .status-shipped       { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .status-delivered     { background: rgba(74,222,128,0.15); color: #4ade80; }
+    .status-processing    { background: rgba(251,191,36,0.15); color: #fbbf24; }
+    .status-out           { background: rgba(168,85,247,0.15); color: #c084fc; }
+    .status-returned      { background: rgba(255,77,77,0.15);  color: #f87171; }
+
     /* ── Quick Reply Chips ── */
     .quick-replies {
       display: flex; gap: 8px; flex-wrap: wrap;
@@ -524,6 +591,15 @@
         const receipt = userRow.querySelector(".receipt");
         if (receipt) receipt.classList.add("delivered");
 
+        // Render order card if present
+        if (data.orderCard) {
+          addBotMessage(displayMsg, () => {
+            renderOrderCard(data.orderCard);
+          });
+          sendBtn.disabled = false;
+          return;
+        }
+
         // Render bot reply with typing simulation
         const botRow = addBotMessage(displayMsg, () => {
           // Quick reply chips after typing finishes
@@ -710,6 +786,64 @@
     bubble.appendChild(btns);
     inner.appendChild(avatar);
     inner.appendChild(bubble);
+    row.appendChild(inner);
+    chatBox.appendChild(row);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  // ── Order card ────────────────────────────────────────────────────────────
+  function getStatusClass(status) {
+    const s = status.toLowerCase();
+    if (s.includes("delivered"))        return "status-delivered";
+    if (s.includes("out for delivery")) return "status-out";
+    if (s.includes("processing"))       return "status-processing";
+    if (s.includes("returned"))         return "status-returned";
+    return "status-shipped";
+  }
+
+  function renderOrderCard(o) {
+    const chatBox = document.getElementById("chat-box");
+
+    const row = document.createElement("div");
+    row.classList.add("message-row", "bot");
+    row.style.maxWidth = "320px";
+
+    const inner = document.createElement("div");
+    inner.classList.add("bot-row-inner");
+
+    const avatar = document.createElement("div");
+    avatar.classList.add("bot-avatar");
+    avatar.textContent = "✦";
+
+    const card = document.createElement("div");
+    card.classList.add("order-card");
+
+    const rows = [
+      { label: "Status",    value: `<span class="status-badge ${getStatusClass(o.status)}">${o.status}</span>` },
+      { label: "Item",      value: `${o.item} × ${o.quantity}` },
+      { label: "Price",     value: o.price },
+      { label: "Placed",    value: o.placedDate },
+      { label: "Shipped",   value: o.shippedDate !== "—" ? `${o.shippedDate} via ${o.carrier}` : "Not yet shipped" },
+      { label: "Arriving",  value: o.estimatedDelivery },
+      { label: "Tracking",  value: o.trackingNumber !== "—" ? o.trackingNumber : "Not available" },
+    ];
+
+    card.innerHTML = `
+      <div class="order-card-header">
+        Order #${o.orderId}
+        <span>${o.item}</span>
+      </div>
+    `;
+
+    rows.forEach(r => {
+      const div = document.createElement("div");
+      div.classList.add("order-card-row");
+      div.innerHTML = `<span class="order-card-label">${r.label}</span><span class="order-card-value">${r.value}</span>`;
+      card.appendChild(div);
+    });
+
+    inner.appendChild(avatar);
+    inner.appendChild(card);
     row.appendChild(inner);
     chatBox.appendChild(row);
     chatBox.scrollTop = chatBox.scrollHeight;
