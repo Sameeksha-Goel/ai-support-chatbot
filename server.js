@@ -177,7 +177,7 @@ app.post("/chat", async (req, res) => {
       chat.awaitingOrderId = false;
       chat.messages.push({ role: "model", content: reply });
       await chat.save();
-      return res.json({ reply });
+      return res.json({ reply, intent: "order_status" });
     }
     chat.awaitingOrderId = false;
   }
@@ -229,7 +229,7 @@ app.post("/chat", async (req, res) => {
     ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, intent: "exchange" });
   }
 
   if (intent === "payment_issue") {
@@ -240,7 +240,7 @@ app.post("/chat", async (req, res) => {
     ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, intent: "payment_issue" });
   }
 
   if (intent === "coupon_issue") {
@@ -251,7 +251,7 @@ app.post("/chat", async (req, res) => {
     ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, intent: "coupon_issue" });
   }
 
   if (intent === "invoice") {
@@ -262,7 +262,7 @@ app.post("/chat", async (req, res) => {
     ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, intent: "invoice" });
   }
 
   if (intent === "warranty") {
@@ -273,7 +273,7 @@ app.post("/chat", async (req, res) => {
     ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, intent: "warranty" });
   }
 
   if (intent === "track_order") {
@@ -296,7 +296,7 @@ app.post("/chat", async (req, res) => {
     ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, intent: "delivery_info" });
   }
 
   if (intent === "cancel_order") {
@@ -307,7 +307,7 @@ app.post("/chat", async (req, res) => {
     ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, intent: "cancel_order" });
   }
 
   // FAQ match
@@ -315,7 +315,7 @@ app.post("/chat", async (req, res) => {
   if (match) {
     chat.messages.push({ role: "model", content: match.answer });
     await chat.save();
-    return res.json({ reply: match.answer });
+    return res.json({ reply: match.answer, intent: "faq" });
   }
 
   // Gemini fallback

@@ -561,23 +561,18 @@
     localStorage.setItem("theme", isDark ? "dark" : "light");
   }
 
-  // ── Quick reply chips per context ──────────────────────────────────────────
+  // ── Quick reply chips per intent ───────────────────────────────────────────
   const quickReplies = {
-    refund:   ["How long does a refund take?", "Track my order", "I have a damaged item"],
-    delivery: ["Track my order", "My order is late", "Refund policy"],
-    order:    ["Check another order", "Refund policy", "I have a damaged item"],
-    cancel:   ["Refund policy", "Track my order", "My order is late"],
-    default:  ["Track my order", "Refund policy", "I have a damaged item"],
+    delivery_info:  ["Track my order", "My order is late", "Refund policy"],
+    cancel_order:   ["Refund policy", "Track my order", "My order is late"],
+    exchange:       ["Refund policy", "Track my order", "I have a damaged item"],
+    payment_issue:  ["Track my order", "Refund policy", "I have a damaged item"],
+    coupon_issue:   ["Track my order", "Refund policy", "I have a damaged item"],
+    invoice:        ["Track my order", "Refund policy", "I have a damaged item"],
+    warranty:       ["I have a damaged item", "Refund policy", "Track my order"],
+    order_status:   ["Track another order", "Refund policy", "I have a damaged item"],
+    faq:            ["Track my order", "Refund policy", "I have a damaged item"],
   };
-
-  function getChipContext(msg) {
-    const m = msg.toLowerCase();
-    if (m.includes("refund") || m.includes("return")) return "refund";
-    if (m.includes("delivery") || m.includes("shipping")) return "delivery";
-    if (m.includes("order") && (m.includes("status") || m.includes("shipped") || m.includes("arriving"))) return "order";
-    if (m.includes("cancel")) return "cancel";
-    return "default";
-  }
 
   // ── Typing simulation (markdown-aware) ────────────────────────────────────
   function typeText(element, text, onDone) {
@@ -673,7 +668,7 @@
           const skipInteractive = ["please enter your order", "please enter a valid order", "server is busy", "something went wrong", "notified our support"];
           const isMidFlow = skipInteractive.some(s => msg.includes(s));
 
-          if (!isMidFlow) addQuickReplies(getChipContext(displayMsg));
+          if (!isMidFlow && data.intent) addQuickReplies(data.intent);
           if (!isQuestion && !isMidFlow) setTimeout(() => addSatisfactionPrompt(), 500);
 
           sendBtn.disabled = false;
