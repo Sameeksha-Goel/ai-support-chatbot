@@ -112,6 +112,8 @@ function findBestMatch(msg, faq) {
   return max > 0 ? best : null;
 }
 
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 app.get("/", (req, res) => res.send("Gemini chatbot server running!"));
@@ -184,7 +186,11 @@ app.post("/chat", async (req, res) => {
   const intent = detectIntent(userMessage);
 
   if (intent === "human_handoff") {
-    const reply = "I've notified our support team. A human agent will reach out to you shortly. 🙋";
+    const reply = pick([
+      "I've notified our support team. A human agent will reach out to you shortly. 🙋",
+      "Got it — I've flagged this for a real agent. Someone will be with you shortly. 🙋",
+      "On it! I've alerted our team and someone will follow up with you soon. 🙋",
+    ]);
     chat.requestedHuman = true;
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
@@ -192,7 +198,11 @@ app.post("/chat", async (req, res) => {
   }
 
   if (intent === "damaged_product") {
-    const reply = `We're really sorry to hear that! 😔 Here's what to do:\n\n1. Take clear photos of the damaged/incorrect item\n2. Share your order ID with us below\n3. Tell us whether you'd prefer a **replacement** or a **full refund**\n\nPlease go ahead and share your order ID to get started.`;
+    const reply = pick([
+      `We're really sorry to hear that! 😔 Here's what to do:\n\n1. Take clear photos of the damaged item\n2. Share your **order ID** below\n3. Let us know if you'd prefer a **replacement** or a **full refund**\n\nStart by sharing your order ID.`,
+      `Oh no, that's not okay at all! 😟 Let's get this sorted:\n\n1. Grab clear photos of the item\n2. Drop your **order ID** below\n3. Tell us — **replacement** or **refund**?\n\nWhat's your order ID?`,
+      `So sorry about this! 😔 Here's how we'll fix it:\n\n1. Take photos of the damaged item\n2. Share your **order ID** below\n3. Choose a **replacement** or a **full refund**\n\nGo ahead and share your order ID to get started.`,
+    ]);
     chat.awaitingDamageOrderId = true;
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
@@ -200,7 +210,11 @@ app.post("/chat", async (req, res) => {
   }
 
   if (intent === "late_delivery") {
-    const reply = `We're sorry your order hasn't arrived yet! 😟 Deliveries can occasionally be delayed due to logistics or local conditions.\n\nPlease share your **order ID** and we'll track it down right away. If needed, we can escalate to our delivery partner.`;
+    const reply = pick([
+      `We're sorry your order hasn't arrived yet! 😟 Delays can happen due to logistics or local conditions — but let's find out exactly where it is.\n\nPlease share your **order ID** and I'll track it down right away.`,
+      `That's frustrating, and we're sorry for the wait! 😟 Let me look into this for you.\n\nCould you share your **order ID**?`,
+      `Apologies for the delay — that's not the experience we want for you! 😔 Share your **order ID** and I'll check exactly where your order is right now.`,
+    ]);
     chat.awaitingOrderId = true;
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
@@ -208,42 +222,66 @@ app.post("/chat", async (req, res) => {
   }
 
   if (intent === "exchange") {
-    const reply = `We offer **exchanges within 7 days** of delivery for size or colour issues. Here's how:\n\n1. Share your **order ID** and photos of the item\n2. Let us know what you'd like instead (size/colour)\n3. We'll arrange a pickup and send the replacement\n\nWould you like to proceed?`;
+    const reply = pick([
+      `We offer **exchanges within 7 days** of delivery for size or colour issues. Here's how:\n\n1. Share your **order ID** and photos of the item\n2. Let us know what you'd like instead\n3. We'll arrange a pickup and send the replacement\n\nWould you like to proceed?`,
+      `No problem — exchanges are available **within 7 days** of delivery for size or colour issues! 🔄\n\nJust share your **order ID** and photos, and tell us what you need instead. We'll handle the rest. Shall we start?`,
+      `Totally understandable! You can exchange **within 7 days** of delivery for a different size or colour.\n\n1. Share your **order ID** and a photo\n2. Tell us what you'd like instead\n3. We'll arrange the swap\n\nWant to go ahead?`,
+    ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
   }
 
   if (intent === "payment_issue") {
-    const reply = `We're sorry about the payment issue! 😟 Here's what to know:\n\n- If your payment **failed**, you won't be charged — the amount will be reversed within **3–5 business days**\n- If you were **charged twice**, please share your order ID and we'll resolve it within **24 hours**\n\nPlease share your order ID to proceed.`;
+    const reply = pick([
+      `We're sorry about the payment issue! 😟\n\n- **Failed payment?** You won't be charged — it reverses within **3–5 business days**\n- **Charged twice?** Share your order ID and we'll resolve it within **24 hours**\n\nWhat happened in your case?`,
+      `Payment issues are stressful — let's sort this out! 💳\n\n- A **failed payment** won't charge you; the hold clears in **3–5 business days**\n- A **double charge** gets fixed within **24 hours** once you share your order ID\n\nPlease share your order ID to proceed.`,
+      `Sorry about that! Here's what to expect:\n\n- **Failed payment** → you won't be charged, reversed in **3–5 business days**\n- **Charged twice** → resolved within **24 hours** — just share your **order ID**\n\nWhat's your situation?`,
+    ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
   }
 
   if (intent === "coupon_issue") {
-    const reply = `Coupon not working? Here are the most common reasons:\n\n- ❌ Coupon has **expired**\n- ❌ Minimum cart value **not met**\n- ❌ Coupon already **used once**\n- ❌ Not applicable on **sale items**\n- ❌ **Case-sensitive** — try typing it exactly\n\nIf none of these apply, our agent can check it manually. Want me to connect you?`;
+    const reply = pick([
+      `Coupon not working? Here are the most common reasons:\n\n- ❌ Coupon has **expired**\n- ❌ Minimum cart value **not met**\n- ❌ Coupon already **used once**\n- ❌ Not valid on **sale items**\n- ❌ **Case-sensitive** — try typing it exactly as received\n\nIf none of these apply, our agent can check it manually. Want me to connect you?`,
+      `Hmm, a few things can cause coupon issues:\n\n- ❌ **Expired** code\n- ❌ Cart doesn't meet the **minimum value**\n- ❌ It's a **one-time use** code\n- ❌ Not applicable to **sale items**\n- ❌ Try entering it **exactly** as shown — it's case-sensitive\n\nStill not working? I can loop in an agent to check it.`,
+      `Let's figure this out! Common culprits:\n\n- ❌ Code may have **expired**\n- ❌ **Minimum cart value** not reached\n- ❌ Already **used once**\n- ❌ Doesn't apply to items on **sale**\n- ❌ Check the **exact spelling** — coupons are case-sensitive\n\nNone of those? Let me know and we'll look into it manually.`,
+    ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
   }
 
   if (intent === "invoice") {
-    const reply = `Your invoice is **automatically emailed** after delivery. 📧\n\nYou can also download it from your account's order history page.\n\nIf you haven't received it, please share your **order ID** and we'll resend it right away.`;
+    const reply = pick([
+      `Your invoice is **automatically emailed** after delivery. 📧\n\nYou can also download it from your account's order history page.\n\nHaven't received it? Share your **order ID** and we'll resend it right away.`,
+      `Invoices are sent automatically once your order is delivered — check your inbox (and spam, just in case). 📧\n\nIf it's not there, drop your **order ID** and I'll get it resent.`,
+      `Your invoice goes out by email right after delivery. 📧 It's also in your account under order history.\n\nDon't see it? Share your **order ID** and we'll send it again.`,
+    ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
   }
 
   if (intent === "warranty") {
-    const reply = `Most products come with a **6-month manufacturer warranty** against defects. 🛡️\n\nFor warranty claims:\n1. Share your **order ID** and photos/video of the defect\n2. We'll arrange a **repair or replacement** at no cost\n\nNote: Warranty does not cover physical damage or misuse.`;
+    const reply = pick([
+      `Most products come with a **6-month manufacturer warranty** against defects. 🛡️\n\nFor a claim:\n1. Share your **order ID** and photos/video of the defect\n2. We'll arrange a **repair or replacement** at no cost\n\n*Warranty doesn't cover physical damage or misuse.*`,
+      `Good news — most items are covered by a **6-month warranty**! 🛡️\n\nTo make a claim, share your **order ID** and some photos of the issue. We'll arrange a repair or replacement free of charge.\n\n*Doesn't apply to accidental damage or misuse.*`,
+      `Most products have a **6-month manufacturer warranty**. 🛡️\n\nJust share your **order ID** and evidence of the defect and we'll take it from there — repair or replacement, at no cost to you.\n\n*Doesn't cover physical damage or misuse.*`,
+    ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
   }
 
   if (intent === "track_order") {
-    const reply = "Please enter your order ID to track your order.";
+    const reply = pick([
+      "Sure! What's your **order ID**?",
+      "Of course — drop your **order ID** and I'll pull up the latest status.",
+      "Happy to help! Please share your **order ID**.",
+    ]);
     chat.awaitingOrderId = true;
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
@@ -251,14 +289,22 @@ app.post("/chat", async (req, res) => {
   }
 
   if (intent === "delivery_info") {
-    const reply = "Delivery usually takes **3–5 business days**. 🚚";
+    const reply = pick([
+      "Standard delivery takes **3–5 business days** from dispatch. 🚚",
+      "Most orders arrive within **3–5 business days**. 🚚",
+      "Delivery usually takes **3–5 business days** once your order ships. 🚚",
+    ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
   }
 
   if (intent === "cancel_order") {
-    const reply = "Orders **cannot be cancelled** once placed. If you'd like a refund, please reach out within 7 days of delivery.";
+    const reply = pick([
+      "Unfortunately, orders **can't be cancelled** once placed. 😔 If you're unhappy with it on arrival, you have **7 days to request a refund**.",
+      "Once an order is confirmed, we're unable to cancel it. However, if it doesn't work out, you can request a **refund within 7 days** of delivery.",
+      "Orders **can't be cancelled** after they're placed — but you do have a **7-day refund window** from delivery if you change your mind.",
+    ]);
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
     return res.json({ reply });
@@ -282,29 +328,33 @@ app.post("/chat", async (req, res) => {
         contents: [{
           role: "user",
           parts: [{ text: `
-You are a customer support assistant for an online store.
+You are a warm, helpful customer support agent for an online store. Write like a real person — not a bot reading from a script.
 
-Rules:
-- Always give short, direct answers (1–2 lines max)
-- Do NOT give long explanations
-- Do NOT ask multiple questions
-- Never say "it depends"
-- Be empathetic when the customer has a problem
-- Use **bold** for key terms
-- Use this info:
-  - Delivery: 3–5 business days
-  - Cancellations: not allowed once placed
-  - Refunds: within 7 days of delivery
-  - Damaged/defective/wrong items: ask for photos + order ID, offer replacement or refund within 24–48 hours
-  - Exchanges: within 7 days, for size or colour issues
-  - Payments: failed payments are reversed in 3–5 business days
-  - Warranty: 6-month manufacturer warranty on most products
-  - Invoice: auto-emailed after delivery, available in order history
+Tone:
+- Match the customer: brief and efficient for simple questions, warm and patient for complaints
+- Never open with "Of course!", "Certainly!", "Great question!" or similar filler phrases
+- Vary your sentence structure — don't always lead the same way
+- Use **bold** for key terms, dates, and amounts
 
-Conversation:
-${chat.messages.map(m => `${m.role}: ${m.content}`).join("\n")}
+Length:
+- Simple question → 1–2 sentences
+- Complex issue or step-by-step → short prose or a numbered list
+- Never pad your answer; never cut off genuinely useful info
 
-User: ${userMessage}
+Store policies:
+- Delivery: 3–5 business days from dispatch
+- Cancellations: not allowed once an order is placed
+- Refunds: within 7 days of delivery
+- Damaged/wrong items: ask for photos + order ID, offer replacement or refund, resolved within 24–48 hours
+- Exchanges: within 7 days of delivery, size or colour issues only
+- Failed payments: not charged, reversed in 3–5 business days; double charges resolved in 24 hours with order ID
+- Warranty: 6-month manufacturer warranty on most products; doesn't cover physical damage or misuse
+- Invoice: auto-emailed after delivery, also downloadable from order history
+
+Conversation so far:
+${chat.messages.map(m => `${m.role === "user" ? "Customer" : "Agent"}: ${m.content}`).join("\n")}
+
+Customer: ${userMessage}
 ` }]
         }]
       }
