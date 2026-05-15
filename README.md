@@ -1,40 +1,48 @@
-# 🤖 AI Support Chatbot
+# AI Support Chatbot
 
-A full-stack AI-powered customer support chatbot with an admin dashboard for monitoring conversations, built using Node.js, MongoDB, and deployed on Render + Netlify.
-
----
-
-## 🚀 Live Demo
-
-- 💬 **Chatbot:** [https://your-chatbot-link.netlify.app](https://thunderous-torte-3fb7c4.netlify.app/)
-- 🛠️ **Admin Panel:** https://beamish-jelly-448134.netlify.app/
+A full-stack AI-powered customer support chatbot with a live admin dashboard, built with Node.js, MongoDB, and Google Gemini.
 
 ---
 
-## 📌 Features
+## Live Demo
 
-### 💬 Chatbot
-- Real-time AI responses using Gemini API
-- Clean modern chat UI (dark theme)
-- Handles common support queries (delivery, refund, etc.)
-- Graceful error handling for API limits
+- **Chatbot:** [thunderous-torte-3fb7c4.netlify.app](https://thunderous-torte-3fb7c4.netlify.app/)
+- **Admin Panel:** [beamish-jelly-448134.netlify.app](https://beamish-jelly-448134.netlify.app/)
 
-### 🗄️ Backend
-- Node.js + Express server
-- MongoDB Atlas for storing chat conversations
-- REST API for chatbot + admin panel
+---
 
-### 🛠️ Admin Dashboard
-- View all user conversations
+## Features
+
+### Chatbot
+- Intent-based responses for 6+ support scenarios: order status, refunds, damaged products, delivery, returns, and more
+- Damaged product flow with guided step-by-step resolution
+- Conversational order status replies that adapt to delivery state (processing / shipped / out for delivery / delivered / returned)
+- Markdown rendering in chat messages
+- Typing simulation for realistic feel
+- Quick reply buttons for common follow-ups
+- Read receipts
+- Post-reply satisfaction prompt with auto-close on resolution
+- Chat history loaded on session start
+- Dark / light mode toggle
+
+### Backend
+- Node.js + Express
+- MongoDB Atlas with a rich orders schema (status, tracking number, carrier, timestamps)
+- Live orders database queried per user message
+- Human handoff routing
+- Unanswered message logging
+
+### Admin Dashboard
+- Live real-time conversation view
 - Search users by ID
-- See latest message preview
-- View message timestamps
-- Delete chats (moderation control)
+- Latest message preview and timestamps
+- Delete chats
 - Total conversation analytics
+- CSV export of all conversations
 
 ---
 
-## 🧠 Tech Stack
+## Tech Stack
 
 | Layer | Tech |
 |-------|------|
@@ -46,20 +54,20 @@ A full-stack AI-powered customer support chatbot with an admin dashboard for mon
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
-ai-support-chatbot/
-│── index.html        # Chatbot UI
-│── admin.html        # Admin dashboard
-│── server.js         # Backend server
-│── package.json
-│── .env              # API keys (not pushed)
+ai-support-bot/
+├── index.html        # Chatbot UI
+├── admin.html        # Admin dashboard
+├── server.js         # Backend server
+├── package.json
+└── .env              # API keys (not pushed)
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+## Setup
 
 1. Clone the repo:
 ```bash
@@ -72,64 +80,44 @@ cd ai-support-chatbot
 npm install
 ```
 
-3. Create `.env` file:
+3. Create `.env`:
 ```
 MONGO_URI=your_mongodb_connection_string
 GEMINI_API_KEY=your_api_key
 ```
 
-4. Run server:
+4. Run:
 ```bash
 node server.js
 ```
 
-5. Open:
-```
-http://localhost:3000
-```
+5. Open `http://localhost:3000`
 
 ---
 
-## ⚠️ Notes
+## Notes
 
-* Free-tier Gemini API has request limits
-* If quota is exceeded, chatbot shows fallback message
-* MongoDB Atlas free cluster used
+- Free-tier Gemini API has request limits — chatbot shows a fallback message if quota is exceeded
+- MongoDB Atlas free cluster used
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-### 💬 Chatbot Interface
+### Chatbot Interface
 ![Chatbot](./screenshots/chatbot.png)
 
-### 🤖 Query Handling
+### Query Handling
 ![Response](./screenshots/response.png)
 
-### 🛠️ Admin Dashboard
+### Admin Dashboard
 ![Admin](./screenshots/admin.png)
 
-### 🗄️ MongoDB Storage
+### MongoDB Storage
 ![Database](./screenshots/db.png)
 
 ---
 
-## 💡 Future Improvements
-
-- Admin authentication (login system)
-- Role-based access control
-- Analytics dashboard (charts)
-- Chat filtering & tagging
-- React-based frontend
-
----
-
-## 🧑‍💻 Author
+## Author
 
 **Sameeksha Goel**
-
----
-
-## ⭐ If you found this useful
-
-Give this repo a star ⭐

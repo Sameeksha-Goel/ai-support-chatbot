@@ -177,7 +177,8 @@
     </div>
     <div class="header-actions">
       <span id="countdown"></span>
-      <a href="https://ai-support-chatbot-ql1c.onrender.com/admin/export" class="btn btn-outline" download>⬇ Export CSV</a>
+      <a href="/admin/export" class="btn btn-outline" download>⬇ Export CSV</a>
+      <a href="/logout" class="btn btn-outline">Sign Out</a>
       <button class="btn btn-gold" onclick="loadAll()">↺ Refresh</button>
     </div>
   </div>
@@ -208,7 +209,7 @@
   </div>
 
 <script>
-  const API = "https://ai-support-chatbot-ql1c.onrender.com";
+  const API = "";
   let allChats = [];
   let refreshInterval;
   let countdown = 30;

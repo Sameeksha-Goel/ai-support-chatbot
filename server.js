@@ -1,9 +1,11 @@
 require("dotenv").config();
 
 const express = require("express");
+const session = require("express-session");
 const cors = require("cors");
 const axios = require("axios");
 const mongoose = require("mongoose");
+const path = require("path");
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
@@ -12,6 +14,18 @@ mongoose.connect(process.env.MONGO_URI)
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, maxAge: 24 * 60 * 60 * 1000 },
+}));
+
+function requireAuth(req, res, next) {
+  if (req.session.admin) return next();
+  res.redirect("/login");
+}
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -317,9 +331,33 @@ app.post("/reset", async (req, res) => {
   res.sendStatus(200);
 });
 
+// ── Auth routes ───────────────────────────────────────────────────────────────
+
+app.get("/login", (req, res) => {
+  if (req.session.admin) return res.redirect("/admin");
+  res.sendFile(path.join(__dirname, "login.html"));
+});
+
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+    req.session.admin = true;
+    return res.redirect("/admin");
+  }
+  res.redirect("/login?error=1");
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy(() => res.redirect("/login"));
+});
+
+app.get("/admin", requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
+});
+
 // ── Admin routes ──────────────────────────────────────────────────────────────
 
-app.get("/admin/chats", async (req, res) => {
+app.get("/admin/chats", requireAuth, async (req, res) => {
   try {
     const chats = await Chat.find().sort({ _id: -1 });
     res.json(chats);
@@ -329,7 +367,7 @@ app.get("/admin/chats", async (req, res) => {
   }
 });
 
-app.delete("/admin/chats/:id", async (req, res) => {
+app.delete("/admin/chats/:id", requireAuth, async (req, res) => {
   try {
     await Chat.findByIdAndDelete(req.params.id);
     res.send("Deleted");
@@ -338,7 +376,7 @@ app.delete("/admin/chats/:id", async (req, res) => {
   }
 });
 
-app.get("/admin/unanswered", async (req, res) => {
+app.get("/admin/unanswered", requireAuth, async (req, res) => {
   try {
     const questions = await Unanswered.find().sort({ _id: -1 }).limit(100);
     res.json(questions);
@@ -347,7 +385,7 @@ app.get("/admin/unanswered", async (req, res) => {
   }
 });
 
-app.get("/admin/export", async (req, res) => {
+app.get("/admin/export", requireAuth, async (req, res) => {
   try {
     const chats = await Chat.find().sort({ _id: -1 });
     const rows = ["userId,role,content,timestamp"];

@@ -563,11 +563,11 @@
 
   // ── Quick reply chips per context ──────────────────────────────────────────
   const quickReplies = {
-    refund:   ["How long does a refund take?", "Track my order", "Speak to an agent"],
-    delivery: ["Track my order", "Change address", "Contact support"],
-    order:    ["Check another order", "Refund policy", "Speak to an agent"],
-    cancel:   ["Refund policy", "Track my order", "Speak to an agent"],
-    default:  ["Track my order", "Refund policy", "Speak to an agent"],
+    refund:   ["How long does a refund take?", "Track my order", "I have a damaged item"],
+    delivery: ["Track my order", "My order is late", "Refund policy"],
+    order:    ["Check another order", "Refund policy", "I have a damaged item"],
+    cancel:   ["Refund policy", "Track my order", "My order is late"],
+    default:  ["Track my order", "Refund policy", "I have a damaged item"],
   };
 
   function getChipContext(msg) {
@@ -668,17 +668,15 @@
 
         // Render bot reply with typing simulation
         const botRow = addBotMessage(displayMsg, () => {
-          // Quick reply chips after typing finishes
-          const skipChips = ["please enter your order", "server is busy", "something went wrong", "notified our support"];
-          if (!skipChips.some(s => displayMsg.toLowerCase().includes(s))) {
-            addQuickReplies(getChipContext(displayMsg));
-          }
+          const msg = displayMsg.toLowerCase();
+          const isQuestion = displayMsg.trim().endsWith("?");
+          const skipInteractive = ["please enter your order", "please enter a valid order", "server is busy", "something went wrong", "notified our support"];
+          const isMidFlow = skipInteractive.some(s => msg.includes(s));
 
-          // Satisfaction prompt (skip mid-flow messages)
-          const skipFollowUp = ["please enter your order id", "please enter a valid order", "server is busy"];
-          if (!skipFollowUp.some(s => displayMsg.toLowerCase().includes(s))) {
-            setTimeout(() => addSatisfactionPrompt(), 500);
-          }
+          if (!isMidFlow) addQuickReplies(getChipContext(displayMsg));
+          if (!isQuestion && !isMidFlow) setTimeout(() => addSatisfactionPrompt(), 500);
+
+          sendBtn.disabled = false;
         });
 
         // Human handoff banner
@@ -689,8 +687,6 @@
           document.getElementById("chat-box").appendChild(banner);
           document.getElementById("chat-box").scrollTop = document.getElementById("chat-box").scrollHeight;
         }
-
-        sendBtn.disabled = false;
       }, 800);
 
     } catch (err) {
