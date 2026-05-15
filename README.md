@@ -7,7 +7,7 @@ A full-stack AI-powered customer support chatbot with a live admin dashboard, bu
 ## Live Demo
 
 - **Chatbot:** [thunderous-torte-3fb7c4.netlify.app](https://thunderous-torte-3fb7c4.netlify.app/)
-- **Admin Panel:** [beamish-jelly-448134.netlify.app](https://beamish-jelly-448134.netlify.app/)
+- **Admin Panel:** [ai-support-chatbot-ql1c.onrender.com/admin](https://ai-support-chatbot-ql1c.onrender.com/admin)
 
 ---
 
