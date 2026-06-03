@@ -240,18 +240,44 @@
       background: #111111; border: 1px solid #1e1e1e;
       border-radius: 12px; padding: 14px 18px;
       margin: 0 auto 10px; max-width: 900px;
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+      display: flex; flex-direction: column; gap: 0;
     }
+    .faq-entry-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .faq-entry-info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
     .faq-entry-q { font-size: 13px; font-weight: 600; color: #e0e0e0; }
     .faq-entry-a { font-size: 12px; color: #555; line-height: 1.5; }
+    .faq-entry-btns { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
     .widget-toggle {
-      padding: 6px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+      padding: 6px 12px; font-size: 12px; font-weight: 600; white-space: nowrap;
       background: none; color: #555; border: 1px solid #2a2a2a;
       border-radius: 8px; cursor: pointer; transition: all 0.15s;
     }
     .widget-toggle:hover { color: #888; border-color: #444; }
     .widget-toggle.active { background: rgba(201,184,0,0.1); color: #c9b800; border-color: rgba(201,184,0,0.35); }
+    .faq-edit-btn {
+      padding: 6px 12px; font-size: 12px; font-weight: 600; white-space: nowrap;
+      background: none; color: #555; border: 1px solid #2a2a2a;
+      border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .faq-edit-btn:hover { color: #c9b800; border-color: rgba(201,184,0,0.35); }
+    .faq-delete-btn {
+      padding: 6px 12px; font-size: 12px; font-weight: 600; white-space: nowrap;
+      background: none; color: #555; border: 1px solid #2a2a2a;
+      border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .faq-delete-btn:hover { color: #ff4d4d; border-color: rgba(255,77,77,0.35); }
+    .faq-edit-form {
+      display: none; flex-direction: column; gap: 8px;
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e1e1e;
+    }
+    .faq-edit-q-input {
+      width: 100%; padding: 9px 14px;
+      background: #1a1a1a; border: 1.5px solid #2a2a2a;
+      border-radius: 10px; outline: none;
+      font-family: inherit; font-size: 13px; color: #e0e0e0;
+      transition: border-color 0.18s;
+    }
+    .faq-edit-q-input:focus { border-color: #c9b800; }
 
     /* ── Countdown ── */
     #countdown { font-size: 11px; color: #444; }
@@ -530,14 +556,30 @@
       card.className = "faq-entry-card";
       const escapedQ = entry.question.replace(/</g, "&lt;").replace(/>/g, "&gt;");
       const escapedA = entry.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const escapedQAttr = entry.question.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+      const escapedAAttr = entry.answer.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       card.innerHTML = `
-        <div class="faq-entry-info">
-          <div class="faq-entry-q">${escapedQ}</div>
-          <div class="faq-entry-a">${escapedA}</div>
+        <div class="faq-entry-top">
+          <div class="faq-entry-info">
+            <div class="faq-entry-q">${escapedQ}</div>
+            <div class="faq-entry-a">${escapedA}</div>
+          </div>
+          <div class="faq-entry-btns">
+            <button class="widget-toggle ${entry.showInWidget ? "active" : ""}" onclick="toggleWidget('${entry._id}', this)">
+              ${entry.showInWidget ? "In Widget ✓" : "Show in Widget"}
+            </button>
+            <button class="faq-edit-btn" onclick="toggleFaqEdit(this)">✏ Edit</button>
+            <button class="faq-delete-btn" onclick="deleteFaqEntry('${entry._id}', this.closest('.faq-entry-card'))">🗑 Delete</button>
+          </div>
         </div>
-        <button class="widget-toggle ${entry.showInWidget ? "active" : ""}" onclick="toggleWidget('${entry._id}', this)">
-          ${entry.showInWidget ? "In Widget ✓" : "Show in Widget"}
-        </button>
+        <div class="faq-edit-form">
+          <input class="faq-edit-q-input" type="text" placeholder="Question" value="${escapedQAttr}" />
+          <textarea class="faq-answer-input" placeholder="Answer" style="min-height:70px">${escapedAAttr}</textarea>
+          <div style="display:flex;gap:8px">
+            <button class="save-faq-btn" data-id="${entry._id}" onclick="saveEditedFaq(this)">Save</button>
+            <button class="cancel-faq-btn" onclick="toggleFaqEdit(this.closest('.faq-entry-card').querySelector('.faq-edit-btn'))">Cancel</button>
+          </div>
+        </div>
       `;
       container.appendChild(card);
     });
@@ -550,6 +592,41 @@
     btn.textContent = data.showInWidget ? "In Widget ✓" : "Show in Widget";
     btn.classList.toggle("active", data.showInWidget);
     btn.disabled = false;
+  }
+
+  function toggleFaqEdit(editBtn) {
+    const card = editBtn.closest(".faq-entry-card");
+    const form = card.querySelector(".faq-edit-form");
+    const visible = form.style.display === "flex";
+    form.style.display = visible ? "none" : "flex";
+    editBtn.textContent = visible ? "✏ Edit" : "Cancel";
+  }
+
+  async function saveEditedFaq(btn) {
+    const card = btn.closest(".faq-entry-card");
+    const id = btn.dataset.id;
+    const question = card.querySelector(".faq-edit-q-input").value.trim();
+    const answer = card.querySelector(".faq-answer-input").value.trim();
+    if (!question || !answer) return;
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+    await fetch(`${API}/admin/faq/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, answer })
+    });
+    await loadFaqEntries();
+  }
+
+  async function deleteFaqEntry(id, card) {
+    if (!confirm("Delete this FAQ entry?")) return;
+    card.style.opacity = "0.4";
+    await fetch(`${API}/admin/faq/${id}`, { method: "DELETE" });
+    card.remove();
+    const container = document.getElementById("faqEntriesContainer");
+    if (!container.children.length) {
+      container.innerHTML = `<div class="empty-state">No FAQ entries yet. Add some from the Unanswered tab.</div>`;
+    }
   }
 
   // ── Live dashboard (auto-refresh every 30s) ────────────────────────────────

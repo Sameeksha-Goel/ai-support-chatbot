@@ -529,6 +529,25 @@ app.patch("/admin/faq/:id", requireAuth, async (req, res) => {
   }
 });
 
+app.put("/admin/faq/:id", requireAuth, async (req, res) => {
+  try {
+    const { question, answer } = req.body;
+    await FaqEntry.findByIdAndUpdate(req.params.id, { question, answer });
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send("Error editing FAQ entry");
+  }
+});
+
+app.delete("/admin/faq/:id", requireAuth, async (req, res) => {
+  try {
+    await FaqEntry.findByIdAndDelete(req.params.id);
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send("Error deleting FAQ entry");
+  }
+});
+
 app.get("/admin/reports", requireAuth, async (req, res) => {
   try {
     const reports = await Report.find().sort({ _id: -1 });
