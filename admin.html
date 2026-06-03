@@ -157,10 +157,45 @@
       background: #111111; border: 1px solid #1e1e1e;
       border-radius: 12px; padding: 14px 18px;
       margin: 0 auto 10px; max-width: 900px;
-      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      display: flex; flex-direction: column; gap: 12px;
     }
+    .unanswered-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .unanswered-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .unanswered-q { font-size: 14px; color: #e0e0e0; flex: 1; }
-    .unanswered-meta { font-size: 11px; color: #444; flex-shrink: 0; text-align: right; }
+    .unanswered-meta { font-size: 11px; color: #444; text-align: right; }
+    .add-faq-btn {
+      padding: 5px 12px; font-size: 12px; font-weight: 600;
+      background: rgba(201,184,0,0.08); color: #c9b800;
+      border: 1px solid rgba(201,184,0,0.25); border-radius: 8px;
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .add-faq-btn:hover { background: rgba(201,184,0,0.15); border-color: rgba(201,184,0,0.5); }
+    .faq-inline-form { display: flex; flex-direction: column; gap: 8px; }
+    .faq-answer-input {
+      width: 100%; padding: 10px 14px;
+      background: #1a1a1a; border: 1.5px solid #2a2a2a;
+      border-radius: 10px; outline: none; resize: vertical;
+      font-family: inherit; font-size: 13px; color: #e0e0e0;
+      min-height: 80px; transition: border-color 0.18s;
+    }
+    .faq-answer-input:focus { border-color: #c9b800; }
+    .faq-answer-input::placeholder { color: #444; }
+    .save-faq-btn {
+      padding: 7px 16px; font-size: 12px; font-weight: 700;
+      background: #c9b800; color: #0a0a0a;
+      border: none; border-radius: 8px; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .save-faq-btn:hover { opacity: 0.88; }
+    .save-faq-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .cancel-faq-btn {
+      padding: 7px 14px; font-size: 12px; font-weight: 600;
+      background: none; color: #555;
+      border: 1px solid #2a2a2a; border-radius: 8px; cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .cancel-faq-btn:hover { color: #888; border-color: #444; }
 
     .empty-state { text-align: center; color: #333; padding: 60px 0; font-size: 15px; }
 
@@ -356,15 +391,61 @@
       const card = document.createElement("div");
       card.className = "unanswered-card";
       const ts = item.timestamp ? new Date(item.timestamp).toLocaleString() : "";
+      const escapedQ = item.question.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       card.innerHTML = `
-        <span class="unanswered-q">${item.question}</span>
-        <div class="unanswered-meta">
-          <div>${item.userId?.slice(0, 10)}...</div>
-          <div>${ts}</div>
+        <div class="unanswered-top">
+          <span class="unanswered-q">${item.question}</span>
+          <div class="unanswered-right">
+            <div class="unanswered-meta">
+              <div>${item.userId?.slice(0, 10)}...</div>
+              <div>${ts}</div>
+            </div>
+            <button class="add-faq-btn" onclick="toggleFaqForm(this)">+ Add to FAQ</button>
+          </div>
+        </div>
+        <div class="faq-inline-form" style="display:none">
+          <textarea class="faq-answer-input" placeholder="Type the answer for this question..."></textarea>
+          <div style="display:flex;gap:8px">
+            <button class="save-faq-btn" data-question="${escapedQ}" onclick="saveFaq(this)">Save to FAQ</button>
+            <button class="cancel-faq-btn" onclick="toggleFaqForm(this.closest('.unanswered-card').querySelector('.add-faq-btn'))">Cancel</button>
+          </div>
         </div>
       `;
       container.appendChild(card);
     });
+  }
+
+  // ── FAQ from unanswered ────────────────────────────────────────────────────
+  function toggleFaqForm(addBtn) {
+    const card = addBtn.closest(".unanswered-card");
+    const form = card.querySelector(".faq-inline-form");
+    const visible = form.style.display !== "none";
+    form.style.display = visible ? "none" : "flex";
+    addBtn.textContent = visible ? "+ Add to FAQ" : "Cancel";
+  }
+
+  async function saveFaq(saveBtn) {
+    const card = saveBtn.closest(".unanswered-card");
+    const question = saveBtn.dataset.question;
+    const answer = card.querySelector(".faq-answer-input").value.trim();
+    if (!answer) return;
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+
+    await fetch(`${API}/admin/faq`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, answer })
+    });
+
+    saveBtn.textContent = "Saved! ✅";
+    setTimeout(() => {
+      card.querySelector(".faq-inline-form").style.display = "none";
+      card.querySelector(".add-faq-btn").textContent = "+ Add to FAQ";
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save to FAQ";
+    }, 1500);
   }
 
   // ── Reports ───────────────────────────────────────────────────────────────

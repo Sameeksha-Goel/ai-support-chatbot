@@ -68,10 +68,17 @@ const ReportSchema = new mongoose.Schema({
   status:    { type: String, default: "open" },
 });
 
+const FaqEntrySchema = new mongoose.Schema({
+  question:  String,
+  answer:    String,
+  createdAt: { type: Date, default: Date.now },
+});
+
 const Chat        = mongoose.model("Chat",        ChatSchema);
 const Order       = mongoose.model("Order",       OrderSchema);
 const Unanswered  = mongoose.model("Unanswered",  UnansweredSchema);
 const Report      = mongoose.model("Report",      ReportSchema);
+const FaqEntry    = mongoose.model("FaqEntry",    FaqEntrySchema);
 
 // ── Seed orders ───────────────────────────────────────────────────────────────
 async function seedOrders() {
@@ -122,6 +129,23 @@ function findBestMatch(msg, faq) {
 }
 
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+const STOPWORDS = new Set(["what","when","where","how","why","who","the","is","are","was","were","will","can","do","does","did","my","your","have","has","had","not","for","and","but","this","that","with","from","about","get","its","it"]);
+const tokenize = str => str.toLowerCase().split(/\W+/).filter(w => w.length > 2 && !STOPWORDS.has(w));
+
+async function findDynamicFaqMatch(userMessage) {
+  const entries = await FaqEntry.find();
+  const userTokens = new Set(tokenize(userMessage));
+  let bestMatch = null, bestScore = 0;
+  for (const entry of entries) {
+    const faqTokens = tokenize(entry.question);
+    if (!faqTokens.length) continue;
+    const overlap = faqTokens.filter(t => userTokens.has(t)).length;
+    const score = overlap / faqTokens.length;
+    if (score > bestScore) { bestScore = score; bestMatch = entry; }
+  }
+  return bestScore >= 0.5 ? bestMatch : null;
+}
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -324,7 +348,15 @@ app.post("/chat", async (req, res) => {
     return res.json({ reply, intent: "cancel_order" });
   }
 
-  // FAQ match
+  // Dynamic admin FAQ match
+  const dynamicMatch = await findDynamicFaqMatch(userMessage);
+  if (dynamicMatch) {
+    chat.messages.push({ role: "model", content: dynamicMatch.answer });
+    await chat.save();
+    return res.json({ reply: dynamicMatch.answer, intent: "faq" });
+  }
+
+  // Hardcoded FAQ match
   const match = findBestMatch(userMessage, faq);
   if (match) {
     chat.messages.push({ role: "model", content: match.answer });
@@ -453,6 +485,16 @@ app.get("/admin/unanswered", requireAuth, async (req, res) => {
     res.json(questions);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch unanswered questions" });
+  }
+});
+
+app.post("/admin/faq", requireAuth, async (req, res) => {
+  try {
+    const { question, answer } = req.body;
+    await FaqEntry.create({ question, answer });
+    res.sendStatus(201);
+  } catch (error) {
+    res.status(500).send("Error saving FAQ entry");
   }
 });
 
