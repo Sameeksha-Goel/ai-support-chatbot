@@ -164,6 +164,42 @@
 
     .empty-state { text-align: center; color: #333; padding: 60px 0; font-size: 15px; }
 
+    /* ── Reports ── */
+    .report-card {
+      background: #111111; border: 1px solid #1e1e1e;
+      border-radius: 12px; padding: 16px 20px;
+      margin: 0 auto 10px; max-width: 900px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .report-card.resolved { opacity: 0.5; }
+    .report-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .report-order { font-size: 13px; font-weight: 700; color: #c9b800; }
+    .report-meta { font-size: 11px; color: #555; }
+    .report-type {
+      font-size: 11px; font-weight: 700; color: #f97316;
+      background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25);
+      padding: 2px 8px; border-radius: 20px; width: fit-content;
+    }
+    .status-badge-open {
+      font-size: 11px; font-weight: 700; color: #f97316;
+      background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25);
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .status-badge-resolved {
+      font-size: 11px; font-weight: 700; color: #4ade80;
+      background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25);
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .resolve-btn {
+      padding: 7px 14px;
+      background: rgba(74,222,128,0.08); color: #4ade80;
+      border: 1px solid rgba(74,222,128,0.25); border-radius: 8px;
+      cursor: pointer; font-size: 12px; font-weight: 600;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .resolve-btn:hover { background: rgba(74,222,128,0.16); border-color: rgba(74,222,128,0.45); }
+
     /* ── Countdown ── */
     #countdown { font-size: 11px; color: #444; }
   </style>
@@ -193,6 +229,7 @@
   <div class="tabs">
     <button class="tab active" onclick="switchTab('chats', this)">💬 Conversations</button>
     <button class="tab" onclick="switchTab('unanswered', this)">❓ Unanswered</button>
+    <button class="tab" onclick="switchTab('reports', this)">📋 Reports</button>
   </div>
 
   <!-- Conversations panel -->
@@ -206,6 +243,11 @@
   <!-- Unanswered questions panel -->
   <div class="panel" id="panel-unanswered">
     <div id="unansweredContainer"></div>
+  </div>
+
+  <!-- Reports panel -->
+  <div class="panel" id="panel-reports">
+    <div id="reportsContainer"></div>
   </div>
 
 <script>
@@ -222,7 +264,7 @@
   }
 
   async function loadAll() {
-    await Promise.all([loadChats(), loadUnanswered()]);
+    await Promise.all([loadChats(), loadUnanswered(), loadReports()]);
     countdown = 30;
   }
 
@@ -323,6 +365,48 @@
       `;
       container.appendChild(card);
     });
+  }
+
+  // ── Reports ───────────────────────────────────────────────────────────────
+  async function loadReports() {
+    const data = await fetch(`${API}/admin/reports`).then(r => r.json());
+    const container = document.getElementById("reportsContainer");
+    container.innerHTML = "";
+
+    if (!data.length) {
+      container.innerHTML = `<div class="empty-state">No reports filed yet</div>`;
+      return;
+    }
+
+    data.forEach(report => {
+      const card = document.createElement("div");
+      card.className = "report-card" + (report.status === "resolved" ? " resolved" : "");
+      const ts = report.timestamp ? new Date(report.timestamp).toLocaleString() : "";
+      const issueLabel = report.issueType.replace(/_/g, " ");
+
+      card.innerHTML = `
+        <div class="report-info">
+          <span class="report-order">Order #${report.orderId}</span>
+          <span class="report-type">${issueLabel}</span>
+          <span class="report-meta">${report.userId?.slice(0, 12)}... · ${ts}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <span class="${report.status === "resolved" ? "status-badge-resolved" : "status-badge-open"}">
+            ${report.status === "resolved" ? "✅ Resolved" : "🔴 Open"}
+          </span>
+          ${report.status !== "resolved" ? `<button class="resolve-btn" onclick="resolveReport('${report._id}', this)">Mark Resolved</button>` : ""}
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+
+  async function resolveReport(id, btn) {
+    btn.disabled = true;
+    btn.textContent = "Updating...";
+    await fetch(`${API}/admin/reports/${id}`, { method: "PATCH" });
+    await loadReports();
   }
 
   // ── Live dashboard (auto-refresh every 30s) ────────────────────────────────

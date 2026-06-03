@@ -60,9 +60,18 @@ const UnansweredSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
+const ReportSchema = new mongoose.Schema({
+  orderId:   String,
+  issueType: String,
+  userId:    String,
+  timestamp: { type: Date, default: Date.now },
+  status:    { type: String, default: "open" },
+});
+
 const Chat        = mongoose.model("Chat",        ChatSchema);
 const Order       = mongoose.model("Order",       OrderSchema);
 const Unanswered  = mongoose.model("Unanswered",  UnansweredSchema);
+const Report      = mongoose.model("Report",      ReportSchema);
 
 // ── Seed orders ───────────────────────────────────────────────────────────────
 async function seedOrders() {
@@ -145,6 +154,7 @@ app.post("/chat", async (req, res) => {
       chat.awaitingDamageOrderId = false;
       chat.messages.push({ role: "model", content: reply });
       await chat.save();
+      await Report.create({ orderId, issueType: "damaged_product", userId });
       return res.json({ reply });
     }
     // Not a number — remind and wait
@@ -443,6 +453,24 @@ app.get("/admin/unanswered", requireAuth, async (req, res) => {
     res.json(questions);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch unanswered questions" });
+  }
+});
+
+app.get("/admin/reports", requireAuth, async (req, res) => {
+  try {
+    const reports = await Report.find().sort({ _id: -1 });
+    res.json(reports);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch reports" });
+  }
+});
+
+app.patch("/admin/reports/:id", requireAuth, async (req, res) => {
+  try {
+    await Report.findByIdAndUpdate(req.params.id, { status: "resolved" });
+    res.sendStatus(200);
+  } catch (error) {
+    res.status(500).send("Error updating report");
   }
 });
 
