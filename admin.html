@@ -294,7 +294,7 @@
       <span id="countdown"></span>
       <a href="/admin/export" class="btn btn-outline" download>⬇ Export CSV</a>
       <a href="/logout" class="btn btn-outline">Sign Out</a>
-      <button class="btn btn-gold" onclick="loadAll()">↺ Refresh</button>
+      <button class="btn btn-gold" onclick="loadAll(this)">↺ Refresh</button>
     </div>
   </div>
 
@@ -348,9 +348,12 @@
     document.getElementById("panel-" + name).classList.add("active");
   }
 
-  async function loadAll() {
+  async function loadAll(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = "↺ Refreshing..."; }
     await Promise.all([loadChats(), loadUnanswered(), loadReports(), loadFaqEntries()]);
     countdown = 30;
+    document.getElementById("countdown").textContent = `Refreshing in ${countdown}s`;
+    if (btn) { btn.disabled = false; btn.textContent = "↺ Refresh"; }
   }
 
   // ── Conversations ──────────────────────────────────────────────────────────
