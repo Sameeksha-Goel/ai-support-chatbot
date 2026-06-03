@@ -198,15 +198,19 @@ app.post("/chat", async (req, res) => {
   }
 
   if (intent === "damaged_product") {
-    const reply = pick([
-      `We're really sorry to hear that! 😔 Here's what to do:\n\n1. Take clear photos of the damaged item\n2. Share your **order ID** below\n3. Let us know if you'd prefer a **replacement** or a **full refund**\n\nStart by sharing your order ID.`,
-      `Oh no, that's not okay at all! 😟 Let's get this sorted:\n\n1. Grab clear photos of the item\n2. Drop your **order ID** below\n3. Tell us — **replacement** or **refund**?\n\nWhat's your order ID?`,
-      `So sorry about this! 😔 Here's how we'll fix it:\n\n1. Take photos of the damaged item\n2. Share your **order ID** below\n3. Choose a **replacement** or a **full refund**\n\nGo ahead and share your order ID to get started.`,
-    ]);
-    chat.awaitingDamageOrderId = true;
-    chat.messages.push({ role: "model", content: reply });
-    await chat.save();
-    return res.json({ reply });
+    const alreadyFiled = chat.messages.some(m => m.role === "model" && m.content.includes("damage report filed"));
+    if (!alreadyFiled) {
+      const reply = pick([
+        `We're really sorry to hear that! 😔 Here's what to do:\n\n1. Take clear photos of the damaged item\n2. Share your **order ID** below\n3. Let us know if you'd prefer a **replacement** or a **full refund**\n\nStart by sharing your order ID.`,
+        `Oh no, that's not okay at all! 😟 Let's get this sorted:\n\n1. Grab clear photos of the item\n2. Drop your **order ID** below\n3. Tell us — **replacement** or **refund**?\n\nWhat's your order ID?`,
+        `So sorry about this! 😔 Here's how we'll fix it:\n\n1. Take photos of the damaged item\n2. Share your **order ID** below\n3. Choose a **replacement** or a **full refund**\n\nGo ahead and share your order ID to get started.`,
+      ]);
+      chat.awaitingDamageOrderId = true;
+      chat.messages.push({ role: "model", content: reply });
+      await chat.save();
+      return res.json({ reply });
+    }
+    // damage already reported — fall through to Gemini with full conversation context
   }
 
   if (intent === "late_delivery") {
