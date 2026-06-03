@@ -496,7 +496,11 @@
       countdown--;
       document.getElementById("countdown").textContent = `Refreshing in ${countdown}s`;
       if (countdown <= 0) {
-        await loadAll();
+        const faqFormOpen = [...document.querySelectorAll(".faq-inline-form")].some(f => f.style.display !== "none");
+        await loadChats();
+        if (!faqFormOpen) await loadUnanswered();
+        await loadReports();
+        countdown = 30;
       }
     }, 1000);
   }
