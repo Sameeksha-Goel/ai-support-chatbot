@@ -151,7 +151,7 @@ app.post("/chat", async (req, res) => {
     const reply = "Please share your **order ID** (e.g. 16452) so we can file the damage report. 📋";
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, midFlow: true });
   }
 
   // ── Awaiting track order ID ───────────────────────────────────────────────
@@ -164,7 +164,7 @@ app.post("/chat", async (req, res) => {
         chat.awaitingOrderId = false;
         chat.messages.push({ role: "model", content: reply });
         await chat.save();
-        return res.json({ reply });
+        return res.json({ reply, midFlow: true });
       }
       const s = order.status.toLowerCase();
       let reply;
@@ -208,7 +208,7 @@ app.post("/chat", async (req, res) => {
       chat.awaitingDamageOrderId = true;
       chat.messages.push({ role: "model", content: reply });
       await chat.save();
-      return res.json({ reply });
+      return res.json({ reply, midFlow: true });
     }
     // damage already reported — fall through to Gemini with full conversation context
   }
@@ -222,7 +222,7 @@ app.post("/chat", async (req, res) => {
     chat.awaitingOrderId = true;
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, midFlow: true });
   }
 
   if (intent === "exchange") {
@@ -289,7 +289,7 @@ app.post("/chat", async (req, res) => {
     chat.awaitingOrderId = true;
     chat.messages.push({ role: "model", content: reply });
     await chat.save();
-    return res.json({ reply });
+    return res.json({ reply, midFlow: true });
   }
 
   if (intent === "delivery_info") {

@@ -663,10 +663,8 @@
 
         // Render bot reply with typing simulation
         const botRow = addBotMessage(displayMsg, () => {
-          const msg = displayMsg.toLowerCase();
           const isQuestion = displayMsg.trim().endsWith("?");
-          const skipInteractive = ["please enter your order", "please enter a valid order", "server is busy", "something went wrong", "notified our support"];
-          const isMidFlow = skipInteractive.some(s => msg.includes(s));
+          const isMidFlow = data.midFlow || ["server is busy", "something went wrong"].some(s => displayMsg.toLowerCase().includes(s));
 
           if (!isMidFlow && data.intent) addQuickReplies(data.intent);
           if (!isQuestion && !isMidFlow) setTimeout(() => addSatisfactionPrompt(), 500);
