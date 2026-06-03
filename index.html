@@ -410,6 +410,46 @@
     .send-btn:hover { transform: scale(1.08); box-shadow: 0 4px 20px rgba(201,184,0,0.5); }
     .send-btn:active { transform: scale(0.95); }
     .send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* ── FAQ Widget ── */
+    .faq-widget {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .faq-widget-header {
+      width: 100%; padding: 9px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: none; border: none; cursor: pointer;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.03em;
+      color: var(--accent);
+      transition: background 0.15s;
+    }
+    .faq-widget-header:hover { background: var(--accent-bg); }
+    .faq-chevron { font-size: 10px; transition: transform 0.2s; }
+    .faq-chevron.open { transform: rotate(180deg); }
+    .faq-widget-body {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+    .faq-widget-body.open { max-height: 210px; overflow-y: auto; }
+    .faq-widget-body::-webkit-scrollbar { width: 3px; }
+    .faq-widget-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+    .faq-item { border-top: 1px solid var(--border); }
+    .faq-q {
+      width: 100%; padding: 9px 20px;
+      background: none; border: none; cursor: pointer; text-align: left;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      font-size: 13px; color: var(--text);
+      transition: color 0.15s, background 0.15s;
+    }
+    .faq-q:hover { color: var(--accent); background: var(--accent-bg); }
+    .faq-q-indicator { font-size: 14px; font-weight: 700; color: var(--accent); flex-shrink: 0; }
+    .faq-a {
+      display: none; padding: 0 20px 10px;
+      font-size: 12px; color: var(--text-muted); line-height: 1.55;
+    }
+    .faq-a.open { display: block; }
   </style>
 </head>
 <body>
@@ -460,6 +500,14 @@
   </div>
 
   <div class="chat-box hidden" id="chat-box"></div>
+
+  <div class="faq-widget" id="faq-widget" style="display:none">
+    <button class="faq-widget-header" onclick="toggleFaqWidget()">
+      <span>❓ Common Questions</span>
+      <span class="faq-chevron" id="faq-chevron">▼</span>
+    </button>
+    <div class="faq-widget-body" id="faq-widget-body"></div>
+  </div>
 
   <div class="input-area">
     <input id="input" type="text" placeholder="Ask something..." autocomplete="off" />
@@ -898,6 +946,47 @@
     chatBox.appendChild(row);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
+
+  // ── FAQ Widget ────────────────────────────────────────────────────────────
+  let faqWidgetOpen = false;
+
+  async function loadFaqWidget() {
+    try {
+      const entries = await fetch("https://ai-support-chatbot-ql1c.onrender.com/faq").then(r => r.json());
+      if (!entries.length) return;
+      const body = document.getElementById("faq-widget-body");
+      entries.forEach(entry => {
+        const item = document.createElement("div");
+        item.className = "faq-item";
+        const escapedQ = entry.question.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const escapedA = entry.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        item.innerHTML = `
+          <button class="faq-q" onclick="toggleFaqItem(this)">
+            <span>${escapedQ}</span>
+            <span class="faq-q-indicator">+</span>
+          </button>
+          <div class="faq-a">${escapedA}</div>
+        `;
+        body.appendChild(item);
+      });
+      document.getElementById("faq-widget").style.display = "block";
+    } catch (e) { /* silently ignore */ }
+  }
+
+  function toggleFaqWidget() {
+    faqWidgetOpen = !faqWidgetOpen;
+    document.getElementById("faq-widget-body").classList.toggle("open", faqWidgetOpen);
+    document.getElementById("faq-chevron").classList.toggle("open", faqWidgetOpen);
+  }
+
+  function toggleFaqItem(btn) {
+    const answer = btn.nextElementSibling;
+    const indicator = btn.querySelector(".faq-q-indicator");
+    const isOpen = answer.classList.toggle("open");
+    indicator.textContent = isOpen ? "−" : "+";
+  }
+
+  loadFaqWidget();
 
   // ── Typing indicator ───────────────────────────────────────────────────────
   function addTypingIndicator() {

@@ -235,6 +235,24 @@
     }
     .resolve-btn:hover { background: rgba(74,222,128,0.16); border-color: rgba(74,222,128,0.45); }
 
+    /* ── FAQ Entries ── */
+    .faq-entry-card {
+      background: #111111; border: 1px solid #1e1e1e;
+      border-radius: 12px; padding: 14px 18px;
+      margin: 0 auto 10px; max-width: 900px;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+    .faq-entry-info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .faq-entry-q { font-size: 13px; font-weight: 600; color: #e0e0e0; }
+    .faq-entry-a { font-size: 12px; color: #555; line-height: 1.5; }
+    .widget-toggle {
+      padding: 6px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+      background: none; color: #555; border: 1px solid #2a2a2a;
+      border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .widget-toggle:hover { color: #888; border-color: #444; }
+    .widget-toggle.active { background: rgba(201,184,0,0.1); color: #c9b800; border-color: rgba(201,184,0,0.35); }
+
     /* ── Countdown ── */
     #countdown { font-size: 11px; color: #444; }
   </style>
@@ -265,6 +283,7 @@
     <button class="tab active" onclick="switchTab('chats', this)">💬 Conversations</button>
     <button class="tab" onclick="switchTab('unanswered', this)">❓ Unanswered</button>
     <button class="tab" onclick="switchTab('reports', this)">📋 Reports</button>
+    <button class="tab" onclick="switchTab('faq', this)">📚 FAQ</button>
   </div>
 
   <!-- Conversations panel -->
@@ -285,6 +304,11 @@
     <div id="reportsContainer"></div>
   </div>
 
+  <!-- FAQ entries panel -->
+  <div class="panel" id="panel-faq">
+    <div id="faqEntriesContainer"></div>
+  </div>
+
 <script>
   const API = "";
   let allChats = [];
@@ -299,7 +323,7 @@
   }
 
   async function loadAll() {
-    await Promise.all([loadChats(), loadUnanswered(), loadReports()]);
+    await Promise.all([loadChats(), loadUnanswered(), loadReports(), loadFaqEntries()]);
     countdown = 30;
   }
 
@@ -490,6 +514,44 @@
     await loadReports();
   }
 
+  // ── FAQ Entries ───────────────────────────────────────────────────────────
+  async function loadFaqEntries() {
+    const data = await fetch(`${API}/admin/faq`).then(r => r.json());
+    const container = document.getElementById("faqEntriesContainer");
+    container.innerHTML = "";
+
+    if (!data.length) {
+      container.innerHTML = `<div class="empty-state">No FAQ entries yet. Add some from the Unanswered tab.</div>`;
+      return;
+    }
+
+    data.forEach(entry => {
+      const card = document.createElement("div");
+      card.className = "faq-entry-card";
+      const escapedQ = entry.question.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const escapedA = entry.answer.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      card.innerHTML = `
+        <div class="faq-entry-info">
+          <div class="faq-entry-q">${escapedQ}</div>
+          <div class="faq-entry-a">${escapedA}</div>
+        </div>
+        <button class="widget-toggle ${entry.showInWidget ? "active" : ""}" onclick="toggleWidget('${entry._id}', this)">
+          ${entry.showInWidget ? "In Widget ✓" : "Show in Widget"}
+        </button>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  async function toggleWidget(id, btn) {
+    btn.disabled = true;
+    const res = await fetch(`${API}/admin/faq/${id}`, { method: "PATCH" });
+    const data = await res.json();
+    btn.textContent = data.showInWidget ? "In Widget ✓" : "Show in Widget";
+    btn.classList.toggle("active", data.showInWidget);
+    btn.disabled = false;
+  }
+
   // ── Live dashboard (auto-refresh every 30s) ────────────────────────────────
   function startLiveRefresh() {
     refreshInterval = setInterval(async () => {
@@ -500,6 +562,7 @@
         await loadChats();
         if (!faqFormOpen) await loadUnanswered();
         await loadReports();
+        await loadFaqEntries();
         countdown = 30;
       }
     }, 1000);

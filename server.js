@@ -69,9 +69,10 @@ const ReportSchema = new mongoose.Schema({
 });
 
 const FaqEntrySchema = new mongoose.Schema({
-  question:  String,
-  answer:    String,
-  createdAt: { type: Date, default: Date.now },
+  question:     String,
+  answer:       String,
+  showInWidget: { type: Boolean, default: false },
+  createdAt:    { type: Date, default: Date.now },
 });
 
 const Chat        = mongoose.model("Chat",        ChatSchema);
@@ -150,6 +151,15 @@ async function findDynamicFaqMatch(userMessage) {
 // ── Routes ────────────────────────────────────────────────────────────────────
 
 app.get("/", (req, res) => res.send("Gemini chatbot server running!"));
+
+app.get("/faq", async (req, res) => {
+  try {
+    const entries = await FaqEntry.find({ showInWidget: true }).select("question answer");
+    res.json(entries);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch FAQ" });
+  }
+});
 
 // Chat history for page reload
 app.get("/chat-history", async (req, res) => {
@@ -488,6 +498,15 @@ app.get("/admin/unanswered", requireAuth, async (req, res) => {
   }
 });
 
+app.get("/admin/faq", requireAuth, async (req, res) => {
+  try {
+    const entries = await FaqEntry.find().sort({ _id: -1 });
+    res.json(entries);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch FAQ entries" });
+  }
+});
+
 app.post("/admin/faq", requireAuth, async (req, res) => {
   try {
     const { question, answer } = req.body;
@@ -495,6 +514,18 @@ app.post("/admin/faq", requireAuth, async (req, res) => {
     res.sendStatus(201);
   } catch (error) {
     res.status(500).send("Error saving FAQ entry");
+  }
+});
+
+app.patch("/admin/faq/:id", requireAuth, async (req, res) => {
+  try {
+    const entry = await FaqEntry.findById(req.params.id);
+    if (!entry) return res.status(404).send("Not found");
+    entry.showInWidget = !entry.showInWidget;
+    await entry.save();
+    res.json({ showInWidget: entry.showInWidget });
+  } catch (error) {
+    res.status(500).send("Error updating FAQ entry");
   }
 });
 
